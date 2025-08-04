@@ -21,6 +21,8 @@ linters:
     - funlen
     - nestif
     - prealloc
+  disable:
+    - revive
 
 linters-settings:
   govet:
@@ -47,10 +49,3 @@ linters-settings:
     min-complexity: 4
   dupl:
     threshold: 100
-  revive:
-    rules:
-      - name: package-comments
-        disabled: true
-      - name: exported
-        disabled: true
-      - name: package-comments
