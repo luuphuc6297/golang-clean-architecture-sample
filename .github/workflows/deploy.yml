@@ -1,0 +1,145 @@
+name: Deploy to GCP
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  PROJECT_ID: emerald-green-1754237937
+  REGION: asia-southeast1
+  INSTANCE_NAME: terraform-instance
+  ZONE: asia-southeast1-a
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_USER: postgres
+          POSTGRES_DB: clean_architecture_api_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Install dependencies
+      run: go mod download
+
+    - name: Run tests
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_USER: postgres
+        DB_PASSWORD: password
+        DB_NAME: clean_architecture_api_test
+        JWT_SECRET_KEY: test-secret-key
+      run: go test -v ./...
+
+    - name: Run linter
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: latest
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      run: |
+        docker build -t clean-architecture-api:${{ github.sha }} .
+        docker save clean-architecture-api:${{ github.sha }} | gzip > app-image.tar.gz
+
+    - name: Upload Docker image as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-image
+        path: app-image.tar.gz
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download Docker image artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: app-image
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+
+    - name: Copy files to GCP instance
+      run: |
+        # Copy Docker image and deployment files
+        gcloud compute scp app-image.tar.gz $INSTANCE_NAME:~/ --zone=$ZONE
+        gcloud compute scp docker-compose.prod.yml $INSTANCE_NAME:~/docker-compose.yml --zone=$ZONE
+        gcloud compute scp .env.prod $INSTANCE_NAME:~/.env --zone=$ZONE
+
+    - name: Deploy on GCP instance
+      run: |
+        gcloud compute ssh $INSTANCE_NAME --zone=$ZONE --command="
+          # Load Docker image
+          gunzip -c app-image.tar.gz | docker load
+          
+          # Stop existing containers
+          docker compose down || true
+          
+          # Start new containers
+          docker compose up -d
+          
+          # Clean up old images
+          docker image prune -f
+        "
+
+    - name: Verify deployment
+      run: |
+        # Get external IP
+        EXTERNAL_IP=\$(gcloud compute instances describe $INSTANCE_NAME --zone=$ZONE --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+        
+        # Wait for service to be ready
+        sleep 30
+        
+        # Health check
+        curl -f http://\$EXTERNAL_IP:8080/health || exit 1
+        
+        echo "Deployment successful! API is running at: http://\$EXTERNAL_IP:8080"

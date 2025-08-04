@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: clean_architecture_postgres
+    environment:
+      POSTGRES_DB: clean_architecture_api
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - clean_architecture_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # API Application
+  api:
+    image: clean-architecture-api:${GITHUB_SHA:-latest}
+    container_name: clean_architecture_api
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=clean_architecture_api
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - PORT=8080
+      - ENV=production
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - clean_architecture_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+
+networks:
+  clean_architecture_network:
+    driver: bridge
