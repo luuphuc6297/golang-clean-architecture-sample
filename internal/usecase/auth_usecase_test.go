@@ -161,50 +161,38 @@ func setupAuthUseCaseTest() (*authUseCase, *MockUserRepository, *MockAuthService
 	return authUC, mockUserRepo, mockAuthService, mockLogger
 }
 
-func TestAuthUseCase_Register(t *testing.T) {
-	tests := []struct {
-		name          string
-		email         string
-		password      string
-		firstName     string
-		lastName      string
-		setupMocks    func(*MockUserRepository, *MockAuthService, *MockLogger)
-		expectedUser  *entities.User
-		expectedError error
-	}{
-		{
-			name:      "Success - Register new user",
-			email:     "test@example.com",
-			password:  "password123",
-			firstName: "John",
-			lastName:  "Doe",
-			setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
-				// Mock GetByEmail to return nil (user doesn't exist)
-				mockRepo.On("GetByEmail", mock.Anything, "test@example.com").Return(nil, domainerrors.ErrUserNotFound)
-				// Mock Create to return nil (success)
-				mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*entities.User"), mock.AnythingOfType("uuid.UUID")).Return(nil)
-				mockLogger.On("Info", mock.Anything, mock.Anything).Return()
-			},
-			expectedError: nil,
+type RegisterTestCase struct {
+	name          string
+	email         string
+	password      string
+	firstName     string
+	lastName      string
+	setupMocks    func(*MockUserRepository, *MockAuthService, *MockLogger)
+	expectedError error
+}
+
+// getRegisterSuccessTestCase returns the success test case for Register function
+func getRegisterSuccessTestCase() RegisterTestCase {
+	return RegisterTestCase{
+		name:      "Success - Register new user",
+		email:     "test@example.com",
+		password:  "password123",
+		firstName: "John",
+		lastName:  "Doe",
+		setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
+			// Mock GetByEmail to return nil (user doesn't exist)
+			mockRepo.On("GetByEmail", mock.Anything, "test@example.com").Return(nil, domainerrors.ErrUserNotFound)
+			// Mock Create to return nil (success)
+			mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*entities.User"), mock.AnythingOfType("uuid.UUID")).Return(nil)
+			mockLogger.On("Info", mock.Anything, mock.Anything).Return()
 		},
-		{
-			name:      "Failure - User already exists",
-			email:     "existing@example.com",
-			password:  "password123",
-			firstName: "John",
-			lastName:  "Doe",
-			setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
-				// Mock GetByEmail to return existing user
-				existingUser := &entities.User{
-					Email:     "existing@example.com",
-					FirstName: "Existing",
-					LastName:  "User",
-				}
-				mockRepo.On("GetByEmail", mock.Anything, "existing@example.com").Return(existingUser, nil)
-				mockLogger.On("Error", mock.Anything, mock.Anything).Return()
-			},
-			expectedError: domainerrors.ErrUserAlreadyExists,
-		},
+		expectedError: nil,
+	}
+}
+
+// getRegisterValidationTestCases returns validation failure test cases
+func getRegisterValidationTestCases() []RegisterTestCase {
+	return []RegisterTestCase{
 		{
 			name:      "Failure - Invalid email",
 			email:     "invalid-email",
@@ -257,39 +245,102 @@ func TestAuthUseCase_Register(t *testing.T) {
 			expectedError: domainerrors.ErrFailedToCreateUser,
 		},
 	}
+}
 
+// getRegisterConflictTestCase returns user conflict test case
+func getRegisterConflictTestCase() RegisterTestCase {
+	existingUser := &entities.User{
+		Email:     "existing@example.com",
+		FirstName: "Existing",
+		LastName:  "User",
+	}
+
+	return RegisterTestCase{
+		name:      "Failure - User already exists",
+		email:     "existing@example.com",
+		password:  "password123",
+		firstName: "John",
+		lastName:  "Doe",
+		setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
+			// Mock GetByEmail to return existing user
+			mockRepo.On("GetByEmail", mock.Anything, "existing@example.com").Return(existingUser, nil)
+			mockLogger.On("Error", mock.Anything, mock.Anything).Return()
+		},
+		expectedError: domainerrors.ErrUserAlreadyExists,
+	}
+}
+
+// getRegisterDatabaseTestCases returns database-related failure test cases
+func getRegisterDatabaseTestCases() []RegisterTestCase {
+	return []RegisterTestCase{
+		{
+			name:      "Failure - Database error during create",
+			email:     "test@example.com",
+			password:  "password123",
+			firstName: "John",
+			lastName:  "Doe",
+			setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
+				// Mock GetByEmail to return nil (user doesn't exist)
+				mockRepo.On("GetByEmail", mock.Anything, "test@example.com").Return(nil, domainerrors.ErrUserNotFound)
+				// Mock Create to return error
+				mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*entities.User"), mock.AnythingOfType("uuid.UUID")).Return(domainerrors.ErrFailedToCreateUser)
+				mockLogger.On("Error", mock.Anything, mock.Anything).Return()
+			},
+			expectedError: domainerrors.ErrFailedToCreateUser,
+		},
+	}
+}
+
+// runRegisterTest executes a single register test case
+func runRegisterTest(t *testing.T, tt RegisterTestCase) {
+	authUC, mockRepo, mockAuth, mockLogger := setupAuthUseCaseTest()
+	tt.setupMocks(mockRepo, mockAuth, mockLogger)
+
+	ctx := context.Background()
+	user, err := authUC.Register(ctx, tt.email, tt.password, tt.firstName, tt.lastName)
+
+	if tt.expectedError != nil {
+		assert.Error(t, err)
+		assert.Equal(t, tt.expectedError, err)
+		assert.Nil(t, user)
+	} else {
+		assert.NoError(t, err)
+		assert.NotNil(t, user)
+		assert.Equal(t, tt.email, user.Email)
+		assert.Equal(t, tt.firstName, user.FirstName)
+		assert.Equal(t, tt.lastName, user.LastName)
+		assert.Equal(t, "user", user.Role)
+		assert.True(t, user.IsActive)
+		// Password should be hashed
+		assert.NotEqual(t, tt.password, user.Password)
+	}
+
+	mockRepo.AssertExpectations(t)
+	mockAuth.AssertExpectations(t)
+	mockLogger.AssertExpectations(t)
+}
+
+// getRegisterTestCases returns all test cases for Register function
+func getRegisterTestCases() []RegisterTestCase {
+	var tests []RegisterTestCase
+	tests = append(tests, getRegisterSuccessTestCase())
+	tests = append(tests, getRegisterConflictTestCase())
+	tests = append(tests, getRegisterValidationTestCases()...)
+	tests = append(tests, getRegisterDatabaseTestCases()...)
+	return tests
+}
+
+func TestAuthUseCase_Register(t *testing.T) {
+	tests := getRegisterTestCases()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			authUC, mockRepo, mockAuth, mockLogger := setupAuthUseCaseTest()
-			tt.setupMocks(mockRepo, mockAuth, mockLogger)
-
-			ctx := context.Background()
-			user, err := authUC.Register(ctx, tt.email, tt.password, tt.firstName, tt.lastName)
-
-			if tt.expectedError != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tt.expectedError, err)
-				assert.Nil(t, user)
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, user)
-				assert.Equal(t, tt.email, user.Email)
-				assert.Equal(t, tt.firstName, user.FirstName)
-				assert.Equal(t, tt.lastName, user.LastName)
-				assert.Equal(t, "user", user.Role)
-				assert.True(t, user.IsActive)
-				// Password should be hashed
-				assert.NotEqual(t, tt.password, user.Password)
-			}
-
-			mockRepo.AssertExpectations(t)
-			mockAuth.AssertExpectations(t)
-			mockLogger.AssertExpectations(t)
+			runRegisterTest(t, tt)
 		})
 	}
 }
 
-func TestAuthUseCase_Login(t *testing.T) {
+// setupLoginTestData creates test data for login tests
+func setupLoginTestData(t *testing.T) (*entities.User, *auth.TokenPair, uuid.UUID) {
 	validUserID := uuid.New()
 
 	// Create real bcrypt hash for testing
@@ -315,28 +366,39 @@ func TestAuthUseCase_Login(t *testing.T) {
 		ExpiresIn:    1703123456,
 	}
 
-	tests := []struct {
-		name          string
-		email         string
-		password      string
-		setupMocks    func(*MockUserRepository, *MockAuthService, *MockLogger)
-		expectedToken *auth.TokenPair
-		expectedError error
-	}{
-		{
-			name:     "Success - Valid login",
-			email:    "test@example.com",
-			password: "password123",
-			setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
-				// Mock GetByEmail to return valid user
-				mockRepo.On("GetByEmail", mock.Anything, "test@example.com").Return(validUser, nil)
-				// Mock GenerateTokenPair to return valid token pair
-				mockAuth.On("GenerateTokenPair", validUserID, "test@example.com", "user").Return(validTokenPair, nil)
-				mockLogger.On("Info", mock.Anything, mock.Anything).Return()
-			},
-			expectedToken: validTokenPair,
-			expectedError: nil,
+	return validUser, validTokenPair, validUserID
+}
+
+type LoginTestCase struct {
+	name          string
+	email         string
+	password      string
+	setupMocks    func(*MockUserRepository, *MockAuthService, *MockLogger)
+	expectedToken *auth.TokenPair
+	expectedError error
+}
+
+// getLoginSuccessTestCase returns the success test case for Login function
+func getLoginSuccessTestCase(validUser *entities.User, validTokenPair *auth.TokenPair, validUserID uuid.UUID) LoginTestCase {
+	return LoginTestCase{
+		name:     "Success - Valid login",
+		email:    "test@example.com",
+		password: "password123",
+		setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
+			// Mock GetByEmail to return valid user
+			mockRepo.On("GetByEmail", mock.Anything, "test@example.com").Return(validUser, nil)
+			// Mock GenerateTokenPair to return valid token pair
+			mockAuth.On("GenerateTokenPair", validUserID, "test@example.com", "user").Return(validTokenPair, nil)
+			mockLogger.On("Info", mock.Anything, mock.Anything).Return()
 		},
+		expectedToken: validTokenPair,
+		expectedError: nil,
+	}
+}
+
+// getLoginFailureTestCases returns failure test cases for Login function
+func getLoginFailureTestCases(validUser *entities.User, validTokenPair *auth.TokenPair, validUserID uuid.UUID) []LoginTestCase {
+	return []LoginTestCase{
 		{
 			name:     "Failure - User not found",
 			email:    "nonexistent@example.com",
@@ -397,28 +459,46 @@ func TestAuthUseCase_Login(t *testing.T) {
 			expectedError: domainerrors.ErrFailedToGenerateTokens,
 		},
 	}
+}
+
+// getLoginTestCases returns all test cases for Login function
+func getLoginTestCases(validUser *entities.User, validTokenPair *auth.TokenPair, validUserID uuid.UUID) []LoginTestCase {
+	var tests []LoginTestCase
+	tests = append(tests, getLoginSuccessTestCase(validUser, validTokenPair, validUserID))
+	tests = append(tests, getLoginFailureTestCases(validUser, validTokenPair, validUserID)...)
+	return tests
+}
+
+// runLoginTest executes a single login test case
+func runLoginTest(t *testing.T, tt LoginTestCase) {
+	authUC, mockRepo, mockAuth, mockLogger := setupAuthUseCaseTest()
+	tt.setupMocks(mockRepo, mockAuth, mockLogger)
+
+	ctx := context.Background()
+	tokenPair, err := authUC.Login(ctx, tt.email, tt.password)
+
+	if tt.expectedError != nil {
+		assert.Error(t, err)
+		assert.Equal(t, tt.expectedError, err)
+		assert.Nil(t, tokenPair)
+	} else {
+		assert.NoError(t, err)
+		assert.NotNil(t, tokenPair)
+		assert.Equal(t, tt.expectedToken, tokenPair)
+	}
+
+	mockRepo.AssertExpectations(t)
+	mockAuth.AssertExpectations(t)
+	mockLogger.AssertExpectations(t)
+}
+
+func TestAuthUseCase_Login(t *testing.T) {
+	validUser, validTokenPair, validUserID := setupLoginTestData(t)
+	tests := getLoginTestCases(validUser, validTokenPair, validUserID)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			authUC, mockRepo, mockAuth, mockLogger := setupAuthUseCaseTest()
-			tt.setupMocks(mockRepo, mockAuth, mockLogger)
-
-			ctx := context.Background()
-			tokenPair, err := authUC.Login(ctx, tt.email, tt.password)
-
-			if tt.expectedError != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tt.expectedError, err)
-				assert.Nil(t, tokenPair)
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, tokenPair)
-				assert.Equal(t, tt.expectedToken, tokenPair)
-			}
-
-			mockRepo.AssertExpectations(t)
-			mockAuth.AssertExpectations(t)
-			mockLogger.AssertExpectations(t)
+			runLoginTest(t, tt)
 		})
 	}
 }

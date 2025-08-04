@@ -1,3 +1,5 @@
+// Package middleware provides HTTP middleware for authentication and authorization.
+// It includes middleware for token validation, role-based access control, and resource protection.
 package middleware
 
 import (
@@ -15,12 +17,14 @@ import (
 	"github.com/google/uuid"
 )
 
+// AuthMiddleware provides authentication and authorization middleware
 type AuthMiddleware struct {
 	authUseCase usecase.AuthUseCase
 	authService repositories.AuthorizationService
 	logger      logger.Logger
 }
 
+// NewAuthMiddleware creates a new authentication middleware instance
 func NewAuthMiddleware(
 	authUseCase usecase.AuthUseCase,
 	authService repositories.AuthorizationService,
@@ -33,6 +37,7 @@ func NewAuthMiddleware(
 	}
 }
 
+// AuthRequired middleware ensures the request has a valid authentication token
 func (m *AuthMiddleware) AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := extractToken(c)
@@ -67,6 +72,7 @@ func (m *AuthMiddleware) AuthRequired() gin.HandlerFunc {
 	}
 }
 
+// ResourceAccess middleware checks if the user has permission to access a specific resource
 func (m *AuthMiddleware) ResourceAccess(resource, action string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		m.AuthRequired()(c)

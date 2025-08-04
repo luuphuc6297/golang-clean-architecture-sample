@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// ProductUseCase defines the business logic interface for product operations
 type ProductUseCase interface {
 	Create(ctx context.Context, product *entities.Product, userID uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*entities.Product, error)

@@ -1,3 +1,4 @@
+// Package main provides the entry point for the Clean Architecture API server.
 package main
 
 import (

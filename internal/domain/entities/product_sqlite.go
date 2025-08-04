@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// ProductSQLite represents a product entity for SQLite database
 type ProductSQLite struct {
 	BaseSQLiteEntity
 	Name        string  `json:"name" gorm:"not null"`
@@ -17,10 +18,12 @@ type ProductSQLite struct {
 	CreatedBy   string  `json:"created_by" gorm:"type:text"`
 }
 
+// TableName returns the table name for ProductSQLite entity
 func (ProductSQLite) TableName() string {
 	return "products"
 }
 
+// Validate validates the SQLite product entity fields
 func (p *ProductSQLite) Validate() error {
 	if err := validators.ValidateRequired(constants.FieldName, p.Name); err != nil {
 		return err
@@ -34,6 +37,7 @@ func (p *ProductSQLite) Validate() error {
 	return nil
 }
 
+// ToProduct converts SQLite product to domain product
 func (p *ProductSQLite) ToProduct() *Product {
 	id, _ := uuid.Parse(p.ID)
 	createdBy, _ := uuid.Parse(p.CreatedBy)
@@ -54,6 +58,7 @@ func (p *ProductSQLite) ToProduct() *Product {
 	return product
 }
 
+// FromProduct converts domain product to SQLite product
 func FromProduct(product *Product) *ProductSQLite {
 	return &ProductSQLite{
 		BaseSQLiteEntity: BaseSQLiteEntity{

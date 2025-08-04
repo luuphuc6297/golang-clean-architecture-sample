@@ -13,11 +13,13 @@ import (
 	"github.com/google/uuid"
 )
 
+// ProductHandler handles HTTP requests for product operations
 type ProductHandler struct {
 	*BaseHandler
 	productUseCase usecase.ProductUseCase
 }
 
+// NewProductHandler creates a new product handler instance
 func NewProductHandler(productUseCase usecase.ProductUseCase, logger logger.Logger) *ProductHandler {
 	return &ProductHandler{
 		BaseHandler:    NewBaseHandler(logger),
@@ -25,6 +27,7 @@ func NewProductHandler(productUseCase usecase.ProductUseCase, logger logger.Logg
 	}
 }
 
+// CreateProductRequest represents the request body for creating a product
 type CreateProductRequest struct {
 	Name        string  `json:"name" binding:"required"`
 	Description string  `json:"description"`
@@ -33,6 +36,7 @@ type CreateProductRequest struct {
 	Category    string  `json:"category"`
 }
 
+// UpdateProductRequest represents the request body for updating a product
 type UpdateProductRequest struct {
 	Name        string  `json:"name" binding:"required"`
 	Description string  `json:"description"`
@@ -41,6 +45,7 @@ type UpdateProductRequest struct {
 	Category    string  `json:"category"`
 }
 
+// CreateProduct handles product creation requests
 func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	var req CreateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -85,6 +90,7 @@ func (h *ProductHandler) createProductFromRequest(req CreateProductRequest) *ent
 	}
 }
 
+// GetProductByID handles requests to retrieve a product by ID
 func (h *ProductHandler) GetProductByID(c *gin.Context) {
 	productID, err := h.ParseUUID(c, "id")
 	if err != nil {
@@ -101,6 +107,7 @@ func (h *ProductHandler) GetProductByID(c *gin.Context) {
 	h.SendSuccessResponse(c, http.StatusOK, gin.H{"product": product})
 }
 
+// UpdateProduct handles product update requests
 func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 	productID, err := h.ParseUUID(c, "id")
 	if err != nil {
@@ -137,6 +144,7 @@ func (h *ProductHandler) createProductFromRequestWithID(productID uuid.UUID, req
 	}
 }
 
+// DeleteProduct handles product deletion requests
 func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 	productID, err := h.ParseUUID(c, "id")
 	if err != nil {
@@ -152,6 +160,7 @@ func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 	h.SendSuccessResponse(c, http.StatusOK, gin.H{"message": "Product deleted successfully"})
 }
 
+// ListProducts handles requests to list all products
 func (h *ProductHandler) ListProducts(c *gin.Context) {
 	limit, offset := h.ParsePagination(c)
 
@@ -164,6 +173,7 @@ func (h *ProductHandler) ListProducts(c *gin.Context) {
 	h.SendSuccessResponse(c, http.StatusOK, gin.H{"products": products})
 }
 
+// GetProductsByCategory handles requests to get products by category
 func (h *ProductHandler) GetProductsByCategory(c *gin.Context) {
 	category := c.Param("category")
 	if category == "" {

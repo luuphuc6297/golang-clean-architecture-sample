@@ -1,3 +1,5 @@
+// Package usecase contains business logic implementations following clean architecture principles.
+// Use cases orchestrate data flow between entities and repositories while enforcing business rules.
 package usecase
 
 import (

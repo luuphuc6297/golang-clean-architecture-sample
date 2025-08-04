@@ -1,3 +1,5 @@
+// Package handlers contains HTTP request handlers for the API endpoints.
+// It handles HTTP requests, validates input, calls use cases, and returns HTTP responses.
 package handlers
 
 import (
@@ -10,11 +12,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// AuthHandler handles HTTP requests for authentication operations
 type AuthHandler struct {
 	*BaseHandler
 	authUseCase usecase.AuthUseCase
 }
 
+// NewAuthHandler creates a new authentication handler instance
 func NewAuthHandler(authUseCase usecase.AuthUseCase, logger logger.Logger) *AuthHandler {
 	return &AuthHandler{
 		BaseHandler: NewBaseHandler(logger),
@@ -22,6 +26,7 @@ func NewAuthHandler(authUseCase usecase.AuthUseCase, logger logger.Logger) *Auth
 	}
 }
 
+// RegisterRequest represents the request body for user registration
 type RegisterRequest struct {
 	Email     string `json:"email" binding:"required"`
 	Password  string `json:"password" binding:"required"`
@@ -29,15 +34,18 @@ type RegisterRequest struct {
 	LastName  string `json:"last_name" binding:"required"`
 }
 
+// LoginRequest represents the request body for user login
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
+// RefreshTokenRequest represents the request body for token refresh
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
 
+// Register handles user registration requests
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -57,6 +65,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	})
 }
 
+// Login handles user authentication requests
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -76,6 +85,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	})
 }
 
+// RefreshToken handles token refresh requests
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	var req RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

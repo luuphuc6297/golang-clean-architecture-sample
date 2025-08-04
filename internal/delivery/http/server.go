@@ -40,9 +40,26 @@ func NewServer(db *gorm.DB, logger logger.Logger) (*Server, error) {
 }
 
 func (s *Server) setupRoutes() error {
+	// Initialize dependencies
+	handlers, authMiddleware, err := s.initializeDependencies()
+	if err != nil {
+		return err
+	}
+
+	// Setup health check
+	s.setupHealthCheck()
+
+	// Setup API routes
+	s.setupAPIRoutes(handlers, authMiddleware)
+
+	return nil
+}
+
+// initializeDependencies initializes all services, repositories, use cases and handlers
+func (s *Server) initializeDependencies() (*routeHandlers, *middleware.AuthMiddleware, error) {
 	authService, err := auth.NewAuthService()
 	if err != nil {
-		return fmt.Errorf("failed to create auth service: %w", err)
+		return nil, nil, fmt.Errorf("failed to create auth service: %w", err)
 	}
 	authLogger := auth.NewAuditLogger(s.logger)
 
@@ -57,73 +74,102 @@ func (s *Server) setupRoutes() error {
 	userUseCase := usecase.NewUserUseCase(userRepo, s.logger)
 	productUseCase := usecase.NewProductUseCase(productRepo, s.logger)
 
-	authHandler := handlers.NewAuthHandler(authUseCase, s.logger)
-	userHandler := handlers.NewUserHandler(userUseCase, s.logger)
-	productHandler := handlers.NewProductHandler(productUseCase, s.logger)
+	handlers := &routeHandlers{
+		auth:    handlers.NewAuthHandler(authUseCase, s.logger),
+		user:    handlers.NewUserHandler(userUseCase, s.logger),
+		product: handlers.NewProductHandler(productUseCase, s.logger),
+	}
 
 	authMiddleware := middleware.NewAuthMiddleware(authUseCase, authzService, s.logger)
 
+	return handlers, authMiddleware, nil
+}
+
+// routeHandlers holds all route handlers
+type routeHandlers struct {
+	auth    *handlers.AuthHandler
+	user    *handlers.UserHandler
+	product *handlers.ProductHandler
+}
+
+// setupHealthCheck sets up health check endpoint
+func (s *Server) setupHealthCheck() {
 	s.router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
+}
 
+// setupAPIRoutes sets up all API routes
+func (s *Server) setupAPIRoutes(h *routeHandlers, authMiddleware *middleware.AuthMiddleware) {
 	api := s.router.Group("/api/v1")
 	{
-		auth := api.Group("/auth")
+		s.setupAuthRoutes(api, h.auth)
+		s.setupUserRoutes(api, h.user, authMiddleware)
+		s.setupProductRoutes(api, h.product, authMiddleware)
+	}
+}
+
+// setupAuthRoutes sets up authentication routes
+func (s *Server) setupAuthRoutes(api *gin.RouterGroup, authHandler *handlers.AuthHandler) {
+	auth := api.Group("/auth")
+	{
+		auth.POST("/register", authHandler.Register)
+		auth.POST("/login", authHandler.Login)
+		auth.POST("/refresh", authHandler.RefreshToken)
+	}
+}
+
+// setupUserRoutes sets up user management routes
+func (s *Server) setupUserRoutes(api *gin.RouterGroup, userHandler *handlers.UserHandler, authMiddleware *middleware.AuthMiddleware) {
+	users := api.Group("/users")
+	{
+		usersProtected := users.Group("")
+		usersProtected.Use(authMiddleware.UserListAccess())
 		{
-			auth.POST("/register", authHandler.Register)
-			auth.POST("/login", authHandler.Login)
-			auth.POST("/refresh", authHandler.RefreshToken)
+			usersProtected.GET("", userHandler.ListUsers)
 		}
 
-		users := api.Group("/users")
+		usersProtected.Use(authMiddleware.UserReadAccess())
 		{
-			usersProtected := users.Group("")
-			usersProtected.Use(authMiddleware.UserListAccess())
-			{
-				usersProtected.GET("", userHandler.ListUsers)
-			}
-
-			usersProtected.Use(authMiddleware.UserReadAccess())
-			{
-				usersProtected.GET("/:id", userHandler.GetUserByID)
-			}
-
-			usersProtected.Use(authMiddleware.UserUpdateAccess())
-			{
-				usersProtected.PUT("/:id", userHandler.UpdateUser)
-			}
-
-			usersProtected.Use(authMiddleware.UserDeleteAccess())
-			{
-				usersProtected.DELETE("/:id", userHandler.DeleteUser)
-			}
+			usersProtected.GET("/:id", userHandler.GetUserByID)
 		}
 
-		products := api.Group("/products")
+		usersProtected.Use(authMiddleware.UserUpdateAccess())
 		{
-			products.GET("", productHandler.ListProducts)
-			products.GET("/:id", productHandler.GetProductByID)
-			products.GET("/category/:category", productHandler.GetProductsByCategory)
+			usersProtected.PUT("/:id", userHandler.UpdateUser)
+		}
 
-			productsProtected := products.Group("")
-			productsProtected.Use(authMiddleware.ProductCreateAccess())
-			{
-				productsProtected.POST("", productHandler.CreateProduct)
-			}
-
-			productsProtected.Use(authMiddleware.ProductUpdateAccess())
-			{
-				productsProtected.PUT("/:id", productHandler.UpdateProduct)
-			}
-
-			productsProtected.Use(authMiddleware.ProductDeleteAccess())
-			{
-				productsProtected.DELETE("/:id", productHandler.DeleteProduct)
-			}
+		usersProtected.Use(authMiddleware.UserDeleteAccess())
+		{
+			usersProtected.DELETE("/:id", userHandler.DeleteUser)
 		}
 	}
-	return nil
+}
+
+// setupProductRoutes sets up product management routes
+func (s *Server) setupProductRoutes(api *gin.RouterGroup, productHandler *handlers.ProductHandler, authMiddleware *middleware.AuthMiddleware) {
+	products := api.Group("/products")
+	{
+		products.GET("", productHandler.ListProducts)
+		products.GET("/:id", productHandler.GetProductByID)
+		products.GET("/category/:category", productHandler.GetProductsByCategory)
+
+		productsProtected := products.Group("")
+		productsProtected.Use(authMiddleware.ProductCreateAccess())
+		{
+			productsProtected.POST("", productHandler.CreateProduct)
+		}
+
+		productsProtected.Use(authMiddleware.ProductUpdateAccess())
+		{
+			productsProtected.PUT("/:id", productHandler.UpdateProduct)
+		}
+
+		productsProtected.Use(authMiddleware.ProductDeleteAccess())
+		{
+			productsProtected.DELETE("/:id", productHandler.DeleteProduct)
+		}
+	}
 }
 
 func (s *Server) Run(addr string) error {

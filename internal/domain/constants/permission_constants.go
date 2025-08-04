@@ -9,12 +9,18 @@ const (
 	// ResourceProduct represents the product resource type for permissions.
 	ResourceProduct = "product"
 
+	// ActionCreate represents the create action
 	ActionCreate = "create"
-	ActionRead   = "read"
+	// ActionRead represents the read action
+	ActionRead = "read"
+	// ActionUpdate represents the update action
 	ActionUpdate = "update"
+	// ActionDelete represents the delete action
 	ActionDelete = "delete"
-	ActionList   = "list"
+	// ActionList represents the list action
+	ActionList = "list"
 
+	// PermissionUserCreate defines permission for creating new users
 	PermissionUserCreate = "user:create"
 	PermissionUserRead   = "user:read"
 	PermissionUserUpdate = "user:update"

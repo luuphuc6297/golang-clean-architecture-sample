@@ -1,3 +1,5 @@
+// Package validators provides validation functions for domain entities and request data.
+// It includes validation for common fields like email, password, and business-specific rules.
 package validators
 
 import (
@@ -9,6 +11,7 @@ import (
 
 var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 
+// ValidateEmail validates that the provided email address is in a valid format
 func ValidateEmail(email string) error {
 	if email == "" {
 		return errors.ErrEmailIsRequired
@@ -19,6 +22,7 @@ func ValidateEmail(email string) error {
 	return nil
 }
 
+// ValidateRequired validates that a required field is not empty
 func ValidateRequired(field, value string) error {
 	if value == "" {
 		switch field {
@@ -37,6 +41,7 @@ func ValidateRequired(field, value string) error {
 	return nil
 }
 
+// ValidatePrice validates that a price is positive and within reasonable limits
 func ValidatePrice(price float64) error {
 	if price <= 0 {
 		return errors.ErrInvalidRequest
@@ -44,6 +49,7 @@ func ValidatePrice(price float64) error {
 	return nil
 }
 
+// ValidateStock validates that stock quantity is non-negative
 func ValidateStock(stock int) error {
 	if stock < 0 {
 		return errors.ErrInvalidRequest
@@ -51,6 +57,7 @@ func ValidateStock(stock int) error {
 	return nil
 }
 
+// ValidateRole validates that the role is one of the allowed values
 func ValidateRole(role string) error {
 	if role == "" {
 		return errors.ErrRoleIsRequired
@@ -61,6 +68,7 @@ func ValidateRole(role string) error {
 	return nil
 }
 
+// ValidatePassword validates that password meets minimum security requirements
 func ValidatePassword(password string) error {
 	if password == "" {
 		return errors.ErrPasswordRequired
@@ -71,6 +79,7 @@ func ValidatePassword(password string) error {
 	return nil
 }
 
+// ValidateRegisterRequest validates all fields required for user registration
 func ValidateRegisterRequest(email, password, firstName, lastName string) error {
 	if err := ValidateEmail(email); err != nil {
 		return err
@@ -87,6 +96,7 @@ func ValidateRegisterRequest(email, password, firstName, lastName string) error 
 	return nil
 }
 
+// ValidateLoginRequest validates fields required for user login
 func ValidateLoginRequest(email, password string) error {
 	if err := ValidateEmail(email); err != nil {
 		return err

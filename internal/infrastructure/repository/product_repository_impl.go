@@ -14,6 +14,7 @@ type productRepository struct {
 	*CleanBaseRepositoryImpl[entities.Product]
 }
 
+// NewProductRepository creates a new product repository instance
 func NewProductRepository(
 	db *gorm.DB,
 	authService repositories.AuthorizationService,

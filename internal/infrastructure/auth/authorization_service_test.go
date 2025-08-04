@@ -6,6 +6,7 @@ import (
 
 	"clean-architecture-api/internal/domain/constants"
 	"clean-architecture-api/internal/domain/entities"
+	"clean-architecture-api/internal/domain/repositories"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -47,12 +48,17 @@ func TestNewAuthorizationService(t *testing.T) {
 	assert.NotNil(t, service)
 }
 
-func TestAuthorizationService_CheckPermission(t *testing.T) {
-	mockEngine := &MockPolicyEngine{}
-	service := NewAuthorizationService(mockEngine)
-	userID := uuid.New()
-
-	tests := []struct {
+// getCheckPermissionTestCases returns test cases for CheckPermission function
+func getCheckPermissionTestCases() []struct {
+	name          string
+	userRole      string
+	resource      string
+	action        string
+	mockResponse  *entities.PermissionResponse
+	mockError     error
+	expectedError bool
+} {
+	return []struct {
 		name          string
 		userRole      string
 		resource      string
@@ -98,32 +104,52 @@ func TestAuthorizationService_CheckPermission(t *testing.T) {
 			expectedError: true,
 		},
 	}
+}
+
+// runCheckPermissionTest executes a single check permission test case
+func runCheckPermissionTest(t *testing.T, service repositories.AuthorizationService, mockEngine *MockPolicyEngine, userID uuid.UUID, tt struct {
+	name          string
+	userRole      string
+	resource      string
+	action        string
+	mockResponse  *entities.PermissionResponse
+	mockError     error
+	expectedError bool
+}) {
+	var ctx context.Context
+	if tt.userRole != "" {
+		ctx = context.WithValue(context.Background(), constants.ContextUserRole, tt.userRole)
+	} else {
+		ctx = context.Background()
+	}
+
+	if tt.userRole != "" {
+		mockEngine.On("Evaluate", mock.Anything, mock.AnythingOfType("*entities.PermissionRequest")).
+			Return(tt.mockResponse, tt.mockError).Once()
+	}
+
+	err := service.CheckPermission(ctx, userID, tt.resource, tt.action)
+
+	if tt.expectedError {
+		assert.Error(t, err)
+	} else {
+		assert.NoError(t, err)
+	}
+
+	if tt.userRole != "" {
+		mockEngine.AssertExpectations(t)
+	}
+}
+
+func TestAuthorizationService_CheckPermission(t *testing.T) {
+	mockEngine := &MockPolicyEngine{}
+	service := NewAuthorizationService(mockEngine)
+	userID := uuid.New()
+	tests := getCheckPermissionTestCases()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var ctx context.Context
-			if tt.userRole != "" {
-				ctx = context.WithValue(context.Background(), constants.ContextUserRole, tt.userRole)
-			} else {
-				ctx = context.Background()
-			}
-
-			if tt.userRole != "" {
-				mockEngine.On("Evaluate", mock.Anything, mock.AnythingOfType("*entities.PermissionRequest")).
-					Return(tt.mockResponse, tt.mockError).Once()
-			}
-
-			err := service.CheckPermission(ctx, userID, tt.resource, tt.action)
-
-			if tt.expectedError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-
-			if tt.userRole != "" {
-				mockEngine.AssertExpectations(t)
-			}
+			runCheckPermissionTest(t, service, mockEngine, userID, tt)
 		})
 	}
 }

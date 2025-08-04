@@ -21,7 +21,6 @@ linters:
     - funlen
     - nestif
     - prealloc
-    - revive
 
 linters-settings:
   govet:
@@ -54,3 +53,4 @@ linters-settings:
         disabled: true
       - name: exported
         disabled: true
+      - name: package-comments

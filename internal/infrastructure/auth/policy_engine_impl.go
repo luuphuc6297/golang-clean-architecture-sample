@@ -123,20 +123,33 @@ func (pe *PolicyEngineImpl) matchesConditions(conditions map[string]interface{},
 
 	for key, expectedValue := range conditions {
 		if key == "resource_owner" {
-			if req.ResourceID != "" {
-				contextOwner, exists := req.Context["resource_owner_id"]
-				if !exists || contextOwner != req.UserID.String() {
-					return false
-				}
-			}
-		} else {
-			if contextValue, exists := req.Context[key]; !exists || contextValue != expectedValue {
+			if !pe.checkResourceOwnership(req) {
 				return false
 			}
+			continue
+		}
+
+		contextValue, exists := req.Context[key]
+		if !exists || contextValue != expectedValue {
+			return false
 		}
 	}
 
 	return true
+}
+
+// checkResourceOwnership validates resource ownership for the permission request
+func (pe *PolicyEngineImpl) checkResourceOwnership(req *entities.PermissionRequest) bool {
+	if req.ResourceID == "" {
+		return true
+	}
+
+	contextOwner, exists := req.Context["resource_owner_id"]
+	if !exists {
+		return false
+	}
+
+	return contextOwner == req.UserID.String()
 }
 
 func (pe *PolicyEngineImpl) logEvaluation(req *entities.PermissionRequest, response *entities.PermissionResponse) {
@@ -250,6 +263,7 @@ func (pe *PolicyEngineImpl) RemovePolicy(ctx context.Context, policyID uuid.UUID
 	return pe.LoadPolicies(ctx)
 }
 
+// GetPoliciesForRole retrieves all policies for a specific role
 func (pe *PolicyEngineImpl) GetPoliciesForRole(ctx context.Context, role string) ([]*entities.PolicyDocument, error) {
 	return pe.policyRepo.GetByRole(ctx, role)
 }

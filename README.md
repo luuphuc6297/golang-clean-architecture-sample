@@ -1,6 +1,6 @@
 # Clean Architecture API
 
-Một RESTful API server được xây dựng theo Clean Architecture với Golang và Gin framework, bao gồm authentication và authorization.
+A RESTful API server built with Clean Architecture principles using Golang and Gin framework, featuring comprehensive authentication and authorization systems.
 
 ## Cấu trúc dự án
 

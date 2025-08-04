@@ -1,3 +1,6 @@
+// Package errors provides domain-specific error types and error handling utilities
+// for the clean architecture API. It defines structured error types with categories,
+// HTTP status codes, and consistent error messaging.
 package errors
 
 import (
@@ -5,10 +8,11 @@ import (
 	"net/http"
 )
 
-// Error Categories
+// ErrorCategory represents different categories of application errors
 type ErrorCategory string
 
 const (
+	// CategoryValidation represents validation-related errors
 	CategoryValidation   ErrorCategory = "validation"
 	CategoryNotFound     ErrorCategory = "not_found"
 	CategoryUnauthorized ErrorCategory = "unauthorized"
@@ -18,7 +22,7 @@ const (
 	CategoryDatabase     ErrorCategory = "database"
 )
 
-// Application Error with category, context and status code
+// AppError represents an application error with category, context and status code
 type AppError struct {
 	Category ErrorCategory `json:"category"`
 	Code     string        `json:"code"`
@@ -38,7 +42,7 @@ func (e AppError) Unwrap() error {
 	return e.Cause
 }
 
-// Error constructors
+// NewValidationError creates a new validation error with the given code and message
 func NewValidationError(code, message string) *AppError {
 	return &AppError{
 		Category: CategoryValidation,
@@ -48,6 +52,7 @@ func NewValidationError(code, message string) *AppError {
 	}
 }
 
+// NewNotFoundError creates a new not found error with the given code and message
 func NewNotFoundError(code, message string) *AppError {
 	return &AppError{
 		Category: CategoryNotFound,
@@ -57,6 +62,7 @@ func NewNotFoundError(code, message string) *AppError {
 	}
 }
 
+// NewUnauthorizedError creates a new unauthorized error with the given code and message
 func NewUnauthorizedError(code, message string) *AppError {
 	return &AppError{
 		Category: CategoryUnauthorized,
@@ -66,6 +72,7 @@ func NewUnauthorizedError(code, message string) *AppError {
 	}
 }
 
+// NewForbiddenError creates a new forbidden error with the given code and message
 func NewForbiddenError(code, message string) *AppError {
 	return &AppError{
 		Category: CategoryForbidden,
@@ -75,6 +82,7 @@ func NewForbiddenError(code, message string) *AppError {
 	}
 }
 
+// NewConflictError creates a new conflict error with the given code and message
 func NewConflictError(code, message string) *AppError {
 	return &AppError{
 		Category: CategoryConflict,
@@ -84,6 +92,7 @@ func NewConflictError(code, message string) *AppError {
 	}
 }
 
+// NewInternalError creates a new internal server error with the given code, message and cause
 func NewInternalError(code, message string, cause error) *AppError {
 	return &AppError{
 		Category: CategoryInternal,
@@ -94,6 +103,7 @@ func NewInternalError(code, message string, cause error) *AppError {
 	}
 }
 
+// NewDatabaseError creates a new database error with the given code, message and cause
 func NewDatabaseError(code, message string, cause error) *AppError {
 	return &AppError{
 		Category: CategoryDatabase,
@@ -105,8 +115,9 @@ func NewDatabaseError(code, message string, cause error) *AppError {
 }
 
 var (
-	/** Validation errors */
-	ErrInvalidRequest      = NewValidationError("INVALID_REQUEST", "invalid request")
+	// ErrInvalidRequest represents an invalid request error
+	ErrInvalidRequest = NewValidationError("INVALID_REQUEST", "invalid request")
+	// ErrInvalidCredentials represents invalid login credentials error
 	ErrInvalidCredentials  = NewValidationError("INVALID_CREDENTIALS", "invalid credentials")
 	ErrInvalidEmail        = NewValidationError("INVALID_EMAIL", "invalid email format")
 	ErrInvalidID           = NewValidationError("INVALID_ID", "invalid ID")
@@ -164,6 +175,7 @@ var (
 	ErrUserDeactivated = ErrUserAccountIsDeactivated
 )
 
+// PermissionError represents a permission-related error with detailed context
 type PermissionError struct {
 	UserRole string
 	Resource string
@@ -181,6 +193,7 @@ func (e PermissionError) Error() string {
 		e.UserRole, e.Action, e.Resource, e.Reason)
 }
 
+// NewPermissionError creates a new permission error with the given parameters
 func NewPermissionError(userRole, resource, action, reason string) *PermissionError {
 	return &PermissionError{
 		UserRole: userRole,
@@ -190,6 +203,7 @@ func NewPermissionError(userRole, resource, action, reason string) *PermissionEr
 	}
 }
 
+// NewPermissionErrorWithUserID creates a new permission error with user ID included
 func NewPermissionErrorWithUserID(userID, userRole, resource, action, reason string) *PermissionError {
 	return &PermissionError{
 		UserID:   userID,
@@ -200,6 +214,7 @@ func NewPermissionErrorWithUserID(userID, userRole, resource, action, reason str
 	}
 }
 
+// RoleNotFoundError represents an error when a role is not found
 type RoleNotFoundError struct {
 	Role string
 }
@@ -208,10 +223,12 @@ func (e RoleNotFoundError) Error() string {
 	return fmt.Sprintf("role not found: %s", e.Role)
 }
 
+// NewRoleNotFoundError creates a new role not found error
 func NewRoleNotFoundError(role string) *RoleNotFoundError {
 	return &RoleNotFoundError{Role: role}
 }
 
+// InvalidPermissionError represents an error for invalid permissions
 type InvalidPermissionError struct {
 	Permission string
 	Details    string
@@ -221,6 +238,7 @@ func (e InvalidPermissionError) Error() string {
 	return fmt.Sprintf("invalid permission: %s - %s", e.Permission, e.Details)
 }
 
+// NewInvalidPermissionError creates a new invalid permission error
 func NewInvalidPermissionError(permission, details string) *InvalidPermissionError {
 	return &InvalidPermissionError{
 		Permission: permission,

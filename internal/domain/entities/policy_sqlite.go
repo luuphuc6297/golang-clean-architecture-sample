@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// PolicyStatementSQLite represents a policy statement entity for SQLite database
 type PolicyStatementSQLite struct {
 	ID         string    `json:"id" gorm:"type:text;primary_key"`
 	PolicyID   string    `json:"policy_id" gorm:"type:text;not null"`
@@ -19,10 +20,12 @@ type PolicyStatementSQLite struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
+// TableName returns the table name for PolicyStatementSQLite entity
 func (PolicyStatementSQLite) TableName() string {
 	return "policy_statements"
 }
 
+// PolicyDocumentSQLite represents a policy document entity for SQLite database
 type PolicyDocumentSQLite struct {
 	BaseSQLiteEntity
 	Name       string                  `json:"name" gorm:"not null;unique"`
@@ -31,10 +34,12 @@ type PolicyDocumentSQLite struct {
 	IsActive   bool                    `json:"is_active" gorm:"default:true"`
 }
 
+// TableName returns the table name for PolicyDocumentSQLite entity
 func (PolicyDocumentSQLite) TableName() string {
 	return "policy_documents"
 }
 
+// ToPolicyDocument converts SQLite policy document to domain policy document
 func (p *PolicyDocumentSQLite) ToPolicyDocument() *PolicyDocument {
 	id, _ := uuid.Parse(p.ID)
 
@@ -74,6 +79,7 @@ func (p *PolicyDocumentSQLite) ToPolicyDocument() *PolicyDocument {
 	}
 }
 
+// FromPolicyDocument converts domain policy document to SQLite policy document
 func FromPolicyDocument(policy *PolicyDocument) *PolicyDocumentSQLite {
 	statements := make([]PolicyStatementSQLite, len(policy.Statements))
 	for i, stmt := range policy.Statements {
