@@ -1,0 +1,50 @@
+version: 2
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+  go: "1.21"
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+    - ineffassign
+    - misspell
+    - gocritic
+    - gocyclo
+    - goconst
+    - gocognit
+    - dupl
+    - funlen
+    - nestif
+    - prealloc
+    - revive
+
+linters-settings:
+  govet:
+    enable:
+      - nilness
+      - shadow
+  misspell:
+    locale: US
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+  gocyclo:
+    min-complexity: 15
+  gocognit:
+    min-complexity: 15
+  funlen:
+    lines: 100
+    statements: 50
+  nestif:
+    min-complexity: 4
+  dupl:
+    threshold: 100
