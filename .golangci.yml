@@ -21,8 +21,6 @@ linters:
     - funlen
     - nestif
     - prealloc
-  disable:
-    - revive
 
 linters-settings:
   govet:
