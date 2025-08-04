@@ -50,7 +50,9 @@ func loadEnv() error {
 	// In production, you might want to use a proper config management library
 	// For now, we'll use godotenv for development
 	if os.Getenv("ENV") == "" {
-		os.Setenv("ENV", "development")
+		if err := os.Setenv("ENV", "development"); err != nil {
+			return err
+		}
 	}
 	return nil
 }

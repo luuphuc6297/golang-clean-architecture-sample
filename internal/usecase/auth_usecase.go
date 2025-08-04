@@ -38,6 +38,7 @@ func NewAuthUseCase(userRepo repositories.UserRepository, authService auth.AuthS
 
 func (uc *authUseCase) Register(ctx context.Context, email, password, firstName, lastName string) (*entities.User, error) {
 	if err := validators.ValidateRegisterRequest(email, password, firstName, lastName); err != nil {
+		uc.logger.Error("User registration failed: validation error", err.Error())
 		return nil, err
 	}
 
@@ -54,15 +55,18 @@ func (uc *authUseCase) Register(ctx context.Context, email, password, firstName,
 
 	systemUserID := uuid.MustParse(constants.SystemUserID)
 	if err := uc.userRepo.Create(ctx, user, systemUserID); err != nil {
+		uc.logger.Error("Failed to create user in database", err.Error())
 		return nil, domainerrors.ErrFailedToCreateUser
 	}
 
+	uc.logger.Info("User registered successfully", email)
 	return user, nil
 }
 
 func (uc *authUseCase) checkUserExists(ctx context.Context, email string) error {
 	existingUser, err := uc.userRepo.GetByEmail(ctx, email)
 	if err == nil && existingUser != nil {
+		uc.logger.Error("User registration failed: user already exists", email)
 		return domainerrors.ErrUserAlreadyExists
 	}
 	return nil
@@ -89,23 +93,28 @@ func (uc *authUseCase) createUser(email, hashedPassword, firstName, lastName str
 
 func (uc *authUseCase) Login(ctx context.Context, email, password string) (*auth.TokenPair, error) {
 	if err := validators.ValidateLoginRequest(email, password); err != nil {
+		uc.logger.Error("User login failed: validation error", err.Error())
 		return nil, err
 	}
 
 	user, err := uc.userRepo.GetByEmail(ctx, email)
 	if err != nil {
+		uc.logger.Error("User login failed: user not found", email)
 		return nil, domainerrors.ErrInvalidCredentials
 	}
 
 	if err := uc.validateUserForLogin(user, password); err != nil {
+		uc.logger.Error("User login failed: authentication failed", email)
 		return nil, err
 	}
 
 	tokenPair, err := uc.authService.GenerateTokenPair(user.ID, user.Email, user.Role)
 	if err != nil {
+		uc.logger.Error("User login failed: token generation failed", email)
 		return nil, domainerrors.ErrFailedToGenerateTokens
 	}
 
+	uc.logger.Info("User logged in successfully", email)
 	return tokenPair, nil
 }
 
