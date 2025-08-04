@@ -1,14 +1,13 @@
 package database
 
 import (
+	"clean-architecture-api/internal/domain/constants"
+	"clean-architecture-api/internal/domain/entities"
+	"clean-architecture-api/pkg/logger"
 	"context"
 	"encoding/json"
 	"fmt"
 	"os"
-
-	"clean-architecture-api/internal/domain/constants"
-	"clean-architecture-api/internal/domain/entities"
-	"clean-architecture-api/pkg/logger"
 
 	"github.com/google/uuid"
 	"gorm.io/driver/sqlite"

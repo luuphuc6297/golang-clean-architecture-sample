@@ -1,9 +1,8 @@
 package repositories
 
 import (
-	"context"
-
 	"clean-architecture-api/internal/domain/entities"
+	"context"
 )
 
 // UserRepository defines the interface for user data operations

@@ -2,11 +2,10 @@
 package main
 
 import (
-	"os"
-
 	"clean-architecture-api/internal/delivery/http"
 	"clean-architecture-api/internal/infrastructure/database"
 	"clean-architecture-api/pkg/logger"
+	"os"
 )
 
 func main() {

@@ -1,8 +1,11 @@
+version: 2
+
 run:
   timeout: 5m
-  go: "1.21"
+  go: "1.24"
 
 linters:
+  default: standard
   enable:
     - errcheck
     - govet
@@ -14,10 +17,17 @@ linters:
     - nestif
   disable:
     - revive
-
 linters-settings:
   funlen:
     lines: 150
     statements: 60
   nestif:
     min-complexity: 4
+  dupl:
+    threshold: 100
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+    - gofumpt

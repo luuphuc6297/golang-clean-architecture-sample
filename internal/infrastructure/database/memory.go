@@ -1,9 +1,8 @@
 package database
 
 import (
-	"log"
-
 	"clean-architecture-api/internal/domain/entities"
+	"log"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"

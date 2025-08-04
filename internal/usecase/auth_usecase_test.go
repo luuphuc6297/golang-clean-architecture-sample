@@ -1,13 +1,13 @@
 package usecase
 
 import (
+	"clean-architecture-api/internal/domain/entities"
+	"clean-architecture-api/internal/infrastructure/auth"
+	"clean-architecture-api/pkg/logger"
 	"context"
 	"testing"
 
-	"clean-architecture-api/internal/domain/entities"
 	domainerrors "clean-architecture-api/internal/domain/errors"
-	"clean-architecture-api/internal/infrastructure/auth"
-	"clean-architecture-api/pkg/logger"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"

@@ -1,12 +1,12 @@
 package usecase
 
 import (
-	"context"
-
 	"clean-architecture-api/internal/domain/entities"
-	domainerrors "clean-architecture-api/internal/domain/errors"
 	"clean-architecture-api/internal/domain/repositories"
 	"clean-architecture-api/pkg/logger"
+	"context"
+
+	domainerrors "clean-architecture-api/internal/domain/errors"
 
 	"github.com/google/uuid"
 )

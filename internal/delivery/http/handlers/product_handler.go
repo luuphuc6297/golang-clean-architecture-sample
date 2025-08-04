@@ -1,13 +1,12 @@
 package handlers
 
 import (
-	"net/http"
-
 	"clean-architecture-api/internal/domain/constants"
 	"clean-architecture-api/internal/domain/entities"
 	"clean-architecture-api/internal/domain/errors"
 	"clean-architecture-api/internal/usecase"
 	"clean-architecture-api/pkg/logger"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

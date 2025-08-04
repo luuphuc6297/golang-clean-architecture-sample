@@ -1,11 +1,10 @@
 package auth
 
 import (
-	"context"
-	"time"
-
 	"clean-architecture-api/internal/domain/repositories"
 	"clean-architecture-api/pkg/logger"
+	"context"
+	"time"
 
 	"github.com/google/uuid"
 )

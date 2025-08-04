@@ -3,10 +3,9 @@
 package validators
 
 import (
-	"regexp"
-
 	"clean-architecture-api/internal/domain/constants"
 	"clean-architecture-api/internal/domain/errors"
+	"regexp"
 )
 
 var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)

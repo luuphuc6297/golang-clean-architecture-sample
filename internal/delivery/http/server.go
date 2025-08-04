@@ -1,14 +1,13 @@
 package http
 
 import (
-	"fmt"
-
 	"clean-architecture-api/internal/delivery/http/handlers"
 	"clean-architecture-api/internal/delivery/middleware"
 	"clean-architecture-api/internal/infrastructure/auth"
 	"clean-architecture-api/internal/infrastructure/repository"
 	"clean-architecture-api/internal/usecase"
 	"clean-architecture-api/pkg/logger"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

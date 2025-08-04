@@ -1,13 +1,12 @@
 package auth
 
 import (
-	"context"
-	"encoding/json"
-
 	"clean-architecture-api/internal/domain/constants"
 	"clean-architecture-api/internal/domain/entities"
 	"clean-architecture-api/internal/domain/errors"
 	"clean-architecture-api/internal/domain/repositories"
+	"context"
+	"encoding/json"
 
 	"github.com/google/uuid"
 )

@@ -1,11 +1,11 @@
 package usecase
 
 import (
+	"clean-architecture-api/pkg/logger"
 	"context"
 	"fmt"
 
 	domainerrors "clean-architecture-api/internal/domain/errors"
-	"clean-architecture-api/pkg/logger"
 )
 
 type BaseUseCase struct {

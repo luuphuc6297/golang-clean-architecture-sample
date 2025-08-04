@@ -1,12 +1,11 @@
 package auth
 
 import (
-	"context"
-	"testing"
-
 	"clean-architecture-api/internal/domain/constants"
 	"clean-architecture-api/internal/domain/entities"
 	"clean-architecture-api/internal/domain/repositories"
+	"context"
+	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -115,7 +114,8 @@ func runCheckPermissionTest(t *testing.T, service repositories.AuthorizationServ
 	mockResponse  *entities.PermissionResponse
 	mockError     error
 	expectedError bool
-}) {
+},
+) {
 	var ctx context.Context
 	if tt.userRole != "" {
 		ctx = context.WithValue(context.Background(), constants.ContextUserRole, tt.userRole)

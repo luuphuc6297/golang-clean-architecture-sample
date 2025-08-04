@@ -1,13 +1,13 @@
 package repository
 
 import (
+	"clean-architecture-api/internal/domain/repositories"
+	"clean-architecture-api/pkg/logger"
 	"context"
 	"errors"
 	"fmt"
 
 	domainerrors "clean-architecture-api/internal/domain/errors"
-	"clean-architecture-api/internal/domain/repositories"
-	"clean-architecture-api/pkg/logger"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"

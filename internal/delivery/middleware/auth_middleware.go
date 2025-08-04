@@ -3,15 +3,14 @@
 package middleware
 
 import (
-	"context"
-	"net/http"
-	"strings"
-
 	"clean-architecture-api/internal/domain/constants"
 	"clean-architecture-api/internal/domain/errors"
 	"clean-architecture-api/internal/domain/repositories"
 	"clean-architecture-api/internal/usecase"
 	"clean-architecture-api/pkg/logger"
+	"context"
+	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

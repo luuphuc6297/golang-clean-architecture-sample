@@ -1,11 +1,10 @@
 package auth
 
 import (
+	"clean-architecture-api/internal/domain/errors"
 	"fmt"
 	"os"
 	"time"
-
-	"clean-architecture-api/internal/domain/errors"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -99,7 +98,6 @@ func (s *authService) ValidateToken(tokenString string) (*Claims, error) {
 		}
 		return s.secretKey, nil
 	})
-
 	if err != nil {
 		return nil, errors.ErrFailedToParseToken
 	}

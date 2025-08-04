@@ -1,11 +1,10 @@
 package repository
 
 import (
-	"context"
-
 	"clean-architecture-api/internal/domain/entities"
 	"clean-architecture-api/internal/domain/repositories"
 	"clean-architecture-api/pkg/logger"
+	"context"
 
 	"gorm.io/gorm"
 )

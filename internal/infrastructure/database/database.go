@@ -1,13 +1,12 @@
 package database
 
 import (
-	"context"
-	"fmt"
-
 	"clean-architecture-api/internal/domain/constants"
 	"clean-architecture-api/internal/domain/entities"
 	"clean-architecture-api/internal/infrastructure/auth"
 	"clean-architecture-api/pkg/logger"
+	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"gorm.io/driver/postgres"

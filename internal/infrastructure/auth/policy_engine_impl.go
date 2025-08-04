@@ -1,15 +1,14 @@
 package auth
 
 import (
-	"context"
-	"fmt"
-	"sync"
-
 	"clean-architecture-api/internal/domain/constants"
 	"clean-architecture-api/internal/domain/entities"
 	"clean-architecture-api/internal/domain/errors"
 	"clean-architecture-api/internal/domain/repositories"
 	"clean-architecture-api/pkg/logger"
+	"context"
+	"fmt"
+	"sync"
 
 	"github.com/google/uuid"
 )

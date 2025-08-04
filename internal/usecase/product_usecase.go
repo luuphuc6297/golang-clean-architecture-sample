@@ -1,11 +1,10 @@
 package usecase
 
 import (
-	"context"
-
 	"clean-architecture-api/internal/domain/entities"
 	"clean-architecture-api/internal/domain/repositories"
 	"clean-architecture-api/pkg/logger"
+	"context"
 
 	"github.com/google/uuid"
 )
@@ -107,7 +106,8 @@ func (uc *productUseCase) List(ctx context.Context, limit, offset int) ([]*entit
 }
 
 func (uc *productUseCase) GetByCategory(ctx context.Context, category string, limit, offset int) ([]*entities.Product,
-	error) {
+	error,
+) {
 	products, err := uc.productRepo.GetByCategory(ctx, category, limit, offset)
 	if err != nil {
 		return nil, uc.HandleError(err, "failed to get products by category")

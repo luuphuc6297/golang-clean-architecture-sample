@@ -1,11 +1,10 @@
 package repository
 
 import (
-	"context"
-
 	"clean-architecture-api/internal/domain/entities"
 	"clean-architecture-api/internal/domain/repositories"
 	"clean-architecture-api/pkg/logger"
+	"context"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -54,7 +53,6 @@ func (r *policyRepository) GetByRole(ctx context.Context, role string) ([]*entit
 		Where("policy_statements.principal = ? OR policy_statements.principal = ?", "role:"+role, "*").
 		Where("policy_documents.is_active = ?", true).
 		Find(&policies).Error
-
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +67,6 @@ func (r *policyRepository) GetActive(ctx context.Context) ([]*entities.PolicyDoc
 		Preload("Statements").
 		Where("is_active = ?", true).
 		Find(&policies).Error
-
 	if err != nil {
 		return nil, err
 	}
