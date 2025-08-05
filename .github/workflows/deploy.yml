@@ -108,14 +108,12 @@ jobs:
     - name: Authenticate to Google Cloud
       uses: 'google-github-actions/auth@v1'
       with:
-        workload_identity_provider: 'projects/emerald-green-1754237937/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider'
-        service_account: 'github-actions-user@emerald-green-1754237937.iam.gserviceaccount.com'
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
 
     - name: Set up Cloud SDK
       uses: 'google-github-actions/setup-gcloud@v2'
       with:
         version: '>= 390.0.0'
-        project_id: ${{ env.PROJECT_ID }}
 
     - name: Copy files to GCP instance
       run: |
