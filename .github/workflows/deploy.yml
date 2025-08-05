@@ -124,29 +124,32 @@ jobs:
 
     - name: Deploy on GCP instance
       run: |
-        gcloud compute ssh $INSTANCE_NAME --zone=$ZONE --command="
+        gcloud compute ssh $INSTANCE_NAME --zone=$ZONE --command='
           # Load Docker image
           gunzip -c app-image.tar.gz | docker load
           
           # Stop existing containers
           docker compose down || true
           
-          # Start new containers
+          # Set GITHUB_SHA environment variable for docker-compose
+          export GITHUB_SHA=${{ github.sha }}
+          
+          # Start new containers with loaded image
           docker compose up -d
           
           # Clean up old images
           docker image prune -f
-        "
+        '
 
     - name: Verify deployment
       run: |
         # Get external IP
-        EXTERNAL_IP=\$(gcloud compute instances describe $INSTANCE_NAME --zone=$ZONE --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+        EXTERNAL_IP=$(gcloud compute instances describe $INSTANCE_NAME --zone=$ZONE --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
         
         # Wait for service to be ready
         sleep 30
         
         # Health check
-        curl -f http://\$EXTERNAL_IP:8080/health || exit 1
+        curl -f http://$EXTERNAL_IP:8080/health || exit 1
         
-        echo "Deployment successful! API is running at: http://\$EXTERNAL_IP:8080"
+        echo "Deployment successful! API is running at: http://$EXTERNAL_IP:8080"
