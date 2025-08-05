@@ -78,7 +78,7 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t clean-architecture-api:${{ github.sha }} .
+        docker build --platform linux/amd64 -t clean-architecture-api:${{ github.sha }} .
         docker save clean-architecture-api:${{ github.sha }} | gzip > app-image.tar.gz
 
     - name: Upload Docker image as artifact
@@ -131,6 +131,12 @@ jobs:
           # Stop existing containers
           docker compose down || true
           
+          # Fix database host for production
+          sed -i "s/DB_HOST=localhost/DB_HOST=postgres/" .env
+          
+          # Update GITHUB_SHA in .env
+          sed -i "s/GITHUB_SHA=.*/GITHUB_SHA=${{ github.sha }}/" .env
+          
           # Set GITHUB_SHA environment variable for docker-compose
           export GITHUB_SHA=${{ github.sha }}
           
@@ -143,13 +149,25 @@ jobs:
 
     - name: Verify deployment
       run: |
+        # Create firewall rule if it doesn't exist
+        gcloud compute firewall-rules create allow-api-port --allow tcp:8080 --source-ranges 0.0.0.0/0 --description "Allow API access on port 8080" || true
+        
         # Get external IP
         EXTERNAL_IP=$(gcloud compute instances describe $INSTANCE_NAME --zone=$ZONE --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
         
-        # Wait for service to be ready
-        sleep 30
+        # Wait for service to be ready (increased timeout)
+        echo "Waiting for API to start..."
+        sleep 60
         
-        # Health check
-        curl -f http://$EXTERNAL_IP:8080/health || exit 1
+        # Health check with retry
+        for i in {1..5}; do
+          if curl -f http://$EXTERNAL_IP:8080/health; then
+            echo "Deployment successful! API is running at: http://$EXTERNAL_IP:8080"
+            exit 0
+          fi
+          echo "Attempt $i failed, retrying in 10 seconds..."
+          sleep 10
+        done
         
-        echo "Deployment successful! API is running at: http://$EXTERNAL_IP:8080"
+        echo "Health check failed after 5 attempts"
+        exit 1
