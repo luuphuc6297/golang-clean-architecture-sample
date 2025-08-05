@@ -125,6 +125,12 @@ func (r *CleanBaseRepositoryImpl[T]) ValidateAccess(ctx context.Context, userID 
 	if r.authService == nil {
 		return nil
 	}
+	
+	// System user bypass - allow system operations
+	if userID.String() == "00000000-0000-0000-0000-000000000000" {
+		return nil
+	}
+	
 	return r.authService.CheckPermission(ctx, userID, r.resourceName, action)
 }
 
