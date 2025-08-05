@@ -12,13 +12,11 @@ import (
 	"github.com/google/uuid"
 )
 
-// UserHandler handles HTTP requests for user operations
 type UserHandler struct {
 	*BaseHandler
 	userUseCase usecase.UserUseCase
 }
 
-// NewUserHandler creates a new user handler instance
 func NewUserHandler(userUseCase usecase.UserUseCase, logger logger.Logger) *UserHandler {
 	return &UserHandler{
 		BaseHandler: NewBaseHandler(logger),
@@ -26,7 +24,6 @@ func NewUserHandler(userUseCase usecase.UserUseCase, logger logger.Logger) *User
 	}
 }
 
-// UpdateUserRequest represents the request body for updating a user
 type UpdateUserRequest struct {
 	FirstName string `json:"first_name" binding:"required"`
 	LastName  string `json:"last_name" binding:"required"`
@@ -34,7 +31,6 @@ type UpdateUserRequest struct {
 	IsActive  bool   `json:"is_active"`
 }
 
-// GetUserByID handles requests to retrieve a user by ID
 func (h *UserHandler) GetUserByID(c *gin.Context) {
 	targetUserID, err := h.ParseUUID(c, "id")
 	if err != nil {
@@ -52,7 +48,6 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 	h.SendSuccessResponse(c, http.StatusOK, gin.H{"user": user})
 }
 
-// UpdateUser handles user update requests
 func (h *UserHandler) UpdateUser(c *gin.Context) {
 	targetUserID, err := h.ParseUUID(c, "id")
 	if err != nil {
@@ -90,7 +85,6 @@ func (h *UserHandler) createUserFromRequest(userID uuid.UUID, req UpdateUserRequ
 	}
 }
 
-// DeleteUser handles user deletion requests
 func (h *UserHandler) DeleteUser(c *gin.Context) {
 	targetUserID, err := h.ParseUUID(c, "id")
 	if err != nil {
@@ -107,7 +101,6 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	h.SendSuccessResponse(c, http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
 
-// ListUsers handles requests to list all users
 func (h *UserHandler) ListUsers(c *gin.Context) {
 	limit, offset := h.ParsePagination(c)
 	currentUserID := h.getCurrentUserID(c)

@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// UserSQLite represents a user entity for SQLite database
 type UserSQLite struct {
 	BaseSQLiteEntity
 	Email     string `json:"email" gorm:"uniqueIndex;not null"`
@@ -18,12 +17,10 @@ type UserSQLite struct {
 	IsActive  bool   `json:"is_active" gorm:"default:true"`
 }
 
-// TableName returns the table name for UserSQLite entity
 func (UserSQLite) TableName() string {
 	return "users"
 }
 
-// Validate validates the SQLite user entity fields
 func (u *UserSQLite) Validate() error {
 	if err := validators.ValidateEmail(u.Email); err != nil {
 		return err
@@ -43,12 +40,10 @@ func (u *UserSQLite) Validate() error {
 	return nil
 }
 
-// IsAdmin returns true if the SQLite user has admin role
 func (u *UserSQLite) IsAdmin() bool {
 	return u.Role == constants.RoleAdmin
 }
 
-// ToUser converts SQLite user to domain user
 func (u *UserSQLite) ToUser() *User {
 	id, _ := uuid.Parse(u.ID)
 	user := &User{
@@ -68,7 +63,6 @@ func (u *UserSQLite) ToUser() *User {
 	return user
 }
 
-// FromUser converts domain user to SQLite user
 func FromUser(user *User) *UserSQLite {
 	return &UserSQLite{
 		BaseSQLiteEntity: BaseSQLiteEntity{

@@ -41,22 +41,16 @@ func NewServer(db *gorm.DB, logger logger.Logger) (*Server, error) {
 }
 
 func (s *Server) setupRoutes() error {
-	// Initialize dependencies
 	handlers, authMiddleware, err := s.initializeDependencies()
 	if err != nil {
 		return err
 	}
-
-	// Setup health check
 	s.setupHealthCheck()
-
-	// Setup API routes
 	s.setupAPIRoutes(handlers, authMiddleware)
 
 	return nil
 }
 
-// initializeDependencies initializes all services, repositories, use cases and handlers
 func (s *Server) initializeDependencies() (*routeHandlers, *middleware.AuthMiddleware, error) {
 	authService, err := auth.NewAuthService()
 	if err != nil {
@@ -64,7 +58,6 @@ func (s *Server) initializeDependencies() (*routeHandlers, *middleware.AuthMiddl
 	}
 	authLogger := auth.NewAuditLogger(s.logger)
 
-	// Choose appropriate policy repository based on environment
 	var policyRepo repositories.PolicyRepository
 	if os.Getenv("ENV") == "production" {
 		policyRepo = repository.NewPolicyRepository(s.db, s.logger)
@@ -92,21 +85,18 @@ func (s *Server) initializeDependencies() (*routeHandlers, *middleware.AuthMiddl
 	return handlers, authMiddleware, nil
 }
 
-// routeHandlers holds all route handlers
 type routeHandlers struct {
 	auth    *handlers.AuthHandler
 	user    *handlers.UserHandler
 	product *handlers.ProductHandler
 }
 
-// setupHealthCheck sets up health check endpoint
 func (s *Server) setupHealthCheck() {
 	s.router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 }
 
-// setupAPIRoutes sets up all API routes
 func (s *Server) setupAPIRoutes(h *routeHandlers, authMiddleware *middleware.AuthMiddleware) {
 	api := s.router.Group("/api/v1")
 	{
@@ -116,7 +106,6 @@ func (s *Server) setupAPIRoutes(h *routeHandlers, authMiddleware *middleware.Aut
 	}
 }
 
-// setupAuthRoutes sets up authentication routes
 func (s *Server) setupAuthRoutes(api *gin.RouterGroup, authHandler *handlers.AuthHandler) {
 	auth := api.Group("/auth")
 	{
@@ -126,7 +115,6 @@ func (s *Server) setupAuthRoutes(api *gin.RouterGroup, authHandler *handlers.Aut
 	}
 }
 
-// setupUserRoutes sets up user management routes
 func (s *Server) setupUserRoutes(api *gin.RouterGroup, userHandler *handlers.UserHandler, authMiddleware *middleware.AuthMiddleware) {
 	users := api.Group("/users")
 	{
@@ -153,7 +141,6 @@ func (s *Server) setupUserRoutes(api *gin.RouterGroup, userHandler *handlers.Use
 	}
 }
 
-// setupProductRoutes sets up product management routes
 func (s *Server) setupProductRoutes(api *gin.RouterGroup, productHandler *handlers.ProductHandler, authMiddleware *middleware.AuthMiddleware) {
 	products := api.Group("/products")
 	{

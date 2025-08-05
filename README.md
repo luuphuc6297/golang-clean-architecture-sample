@@ -1,8 +1,8 @@
 # Clean Architecture API
 
-A RESTful API server built with Clean Architecture principles using Golang and Gin framework, featuring authentication and authorization.
+A RESTful API server built with Clean Architecture principles using Golang and Gin framework, featuring comprehensive authentication and authorization systems.
 
-## Project Structure
+## Cấu trúc dự án
 
 ```
 clean-architecture-api/
@@ -12,8 +12,6 @@ clean-architecture-api/
 ├── internal/
 │   ├── domain/                     # Business logic layer
 │   │   ├── entities/               # Domain entities
-│   │   ├── constants/              # Domain constants
-│   │   ├── errors/                 # Domain errors
 │   │   └── repositories/           # Repository interfaces
 │   ├── usecase/                    # Use cases (business logic)
 │   ├── delivery/                   # Delivery layer
@@ -25,65 +23,64 @@ clean-architecture-api/
 │       └── repository/             # Repository implementations
 ├── pkg/                           # Shared packages
 │   └── logger/                    # Logging utilities
-├── scripts/                       # Build and test scripts
+├── configs/                       # Configuration files
 ├── go.mod                         # Go modules
 └── README.md                      # Documentation
 ```
 
-## Features
+## Tính năng
 
 - ✅ Clean Architecture pattern
 - ✅ JWT Authentication & Authorization
 - ✅ Role-based access control
 - ✅ RESTful API endpoints
-- ✅ Database integration (PostgreSQL/SQLite)
+- ✅ Database integration (PostgreSQL)
 - ✅ Structured logging
 - ✅ Input validation
 - ✅ Error handling
 - ✅ Pagination support
-- ✅ Optimized build scripts
-- ✅ Comprehensive testing
 
-## Quick Start
+## Cài đặt
 
-### Prerequisites
+### Yêu cầu
 
 - Go 1.21+
-- PostgreSQL 12+ (or SQLite for development)
+- PostgreSQL 12+
 
-### Installation
+### Bước 1: Clone repository
 
-1. **Clone repository**
 ```bash
 git clone <repository-url>
 cd clean-architecture-api
 ```
 
-2. **Install dependencies**
+### Bước 2: Cài đặt dependencies
+
 ```bash
 go mod tidy
 ```
 
-3. **Configure environment**
+### Bước 3: Cấu hình database
+
+1. Tạo database PostgreSQL:
+```sql
+CREATE DATABASE clean_architecture_api;
+```
+
+2. Tạo file `.env` từ `env.example`:
 ```bash
 cp env.example .env
-# Edit .env with your database settings
 ```
 
-4. **Run with PostgreSQL**
+3. Cập nhật thông tin database trong file `.env`
+
+### Bước 4: Chạy ứng dụng
+
 ```bash
-make run
+go run cmd/server/main.go
 ```
 
-5. **Run with SQLite (no Docker required)**
-```bash
-make run-sqlite
-```
-
-6. **Run with hot reload**
-```bash
-make dev
-```
+Server sẽ chạy tại `http://localhost:8080`
 
 ## API Endpoints
 
@@ -91,138 +88,126 @@ make dev
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| POST | `/api/v1/auth/register` | Register new user | ❌ |
-| POST | `/api/v1/auth/login` | User login | ❌ |
+| POST | `/api/v1/auth/register` | Đăng ký user mới | ❌ |
+| POST | `/api/v1/auth/login` | Đăng nhập | ❌ |
 | POST | `/api/v1/auth/refresh` | Refresh token | ❌ |
 
 ### Users (Admin only)
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| GET | `/api/v1/users` | List users | ✅ (Admin) |
-| GET | `/api/v1/users/:id` | Get user by ID | ✅ (Admin) |
-| PUT | `/api/v1/users/:id` | Update user | ✅ (Admin) |
-| DELETE | `/api/v1/users/:id` | Delete user | ✅ (Admin) |
+| GET | `/api/v1/users` | Lấy danh sách users | ✅ (Admin) |
+| GET | `/api/v1/users/:id` | Lấy thông tin user | ✅ (Admin) |
+| PUT | `/api/v1/users/:id` | Cập nhật user | ✅ (Admin) |
+| DELETE | `/api/v1/users/:id` | Xóa user | ✅ (Admin) |
 
 ### Products
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| GET | `/api/v1/products` | List products | ❌ |
-| GET | `/api/v1/products/:id` | Get product by ID | ❌ |
-| GET | `/api/v1/products/category/:category` | Get products by category | ❌ |
-| POST | `/api/v1/products` | Create product | ✅ |
-| PUT | `/api/v1/products/:id` | Update product | ✅ |
-| DELETE | `/api/v1/products/:id` | Delete product | ✅ |
+| GET | `/api/v1/products` | Lấy danh sách products | ❌ |
+| GET | `/api/v1/products/:id` | Lấy thông tin product | ❌ |
+| GET | `/api/v1/products/category/:category` | Lấy products theo category | ❌ |
+| POST | `/api/v1/products` | Tạo product mới | ✅ |
+| PUT | `/api/v1/products/:id` | Cập nhật product | ✅ |
+| DELETE | `/api/v1/products/:id` | Xóa product | ✅ |
+
+### Health Check
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Health check |
+
+## Authentication
+
+### Register
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "password123",
+    "first_name": "John",
+    "last_name": "Doe"
+  }'
+```
+
+### Login
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "password123"
+  }'
+```
+
+Response:
+```json
+{
+  "message": "Login successful",
+  "tokens": {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "expires_in": 1703123456
+  }
+}
+```
+
+### Sử dụng token
+
+```bash
+curl -X GET http://localhost:8080/api/v1/products \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+## Roles
+
+- `user`: Người dùng thông thường
+- `admin`: Quản trị viên (có quyền truy cập tất cả endpoints)
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PORT` | Server port | 8080 |
+| `ENV` | Environment | development |
+| `DB_HOST` | Database host | localhost |
+| `DB_PORT` | Database port | 5432 |
+| `DB_USER` | Database user | postgres |
+| `DB_PASSWORD` | Database password | password |
+| `DB_NAME` | Database name | clean_architecture_api |
+| `JWT_SECRET_KEY` | JWT secret key | your-secret-key-change-in-production |
 
 ## Development
 
-### Available Commands
+### Chạy tests
 
 ```bash
-# Build application
-make build
-
-# Run tests
-make test
-
-# Run tests with coverage
-make test-coverage
-
-# Format code
-make format
-
-# Check code quality
-make lint
-
-# Test API endpoints
-make test-api
-
-# Clean build artifacts
-make clean
-```
-
-### Code Quality
-
-The project uses golangci-lint for code quality checks:
-
-```bash
-# Run linter
-golangci-lint run
-
-# Run specific linters
-golangci-lint run --enable=gocritic,gocyclo
-```
-
-### Testing
-
-```bash
-# Run all tests
 go test ./...
-
-# Run tests with coverage
-go test -cover ./...
-
-# Run specific test
-go test ./internal/usecase
 ```
 
-## Configuration
-
-### Environment Variables
+### Format code
 
 ```bash
-# Server
-PORT=8080
-ENV=development
-
-# Database
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=password
-DB_NAME=clean_architecture_api
-
-# JWT
-JWT_SECRET_KEY=your-secret-key-change-in-production
-JWT_ACCESS_TOKEN_EXPIRY=15m
-JWT_REFRESH_TOKEN_EXPIRY=7d
+go fmt ./...
 ```
 
-### Database Setup
+### Lint code
 
-#### PostgreSQL
-```sql
-CREATE DATABASE clean_architecture_api;
+```bash
+golangci-lint run
 ```
 
-#### SQLite
-No setup required - database file will be created automatically.
+## Production Deployment
 
-## Architecture
-
-### Clean Architecture Layers
-
-1. **Domain Layer**: Business entities and rules
-2. **Use Case Layer**: Application business logic
-3. **Delivery Layer**: HTTP handlers and middleware
-4. **Infrastructure Layer**: Database, external services
-
-### Key Principles
-
-- **Dependency Inversion**: High-level modules don't depend on low-level modules
-- **Single Responsibility**: Each component has one reason to change
-- **Open/Closed**: Open for extension, closed for modification
-- **Interface Segregation**: Clients depend only on interfaces they use
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests and linting
-5. Submit a pull request
+1. Cập nhật `JWT_SECRET_KEY` với một giá trị bảo mật
+2. Cấu hình database production
+3. Sử dụng reverse proxy (nginx)
+4. Cấu hình SSL/TLS
+5. Monitoring và logging
 
 ## License
 
-This project is licensed under the MIT License. 

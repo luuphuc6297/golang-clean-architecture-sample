@@ -1,5 +1,4 @@
 // Package logger provides a structured logging interface and implementation
-// for the application. It supports multiple log levels and structured output.
 package logger
 
 import (
@@ -8,7 +7,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Logger defines the interface for application logging with multiple levels
 type Logger interface {
 	Info(args ...any)
 	Error(args ...any)

@@ -15,7 +15,6 @@ type policyRepository struct {
 	logger logger.Logger
 }
 
-// NewPolicyRepository creates a new policy repository instance
 func NewPolicyRepository(db *gorm.DB, logger logger.Logger) repositories.PolicyRepository {
 	return &policyRepository{
 		db:     db,

@@ -65,6 +65,37 @@ jobs:
       with:
         version: v2.3.1
 
+    - name: Generate test coverage
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_USER: postgres
+        DB_PASSWORD: password
+        DB_NAME: clean_architecture_api_test
+        JWT_SECRET_KEY: test-secret-key
+      run: |
+        go test -v -coverprofile=coverage.out ./...
+
+    - name: SonarQube Scan
+      uses: sonarqube-quality-gate-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        scanMetadataReportFile: .scannerwork/report-task.txt
+      continue-on-error: true
+
+    - name: Run SonarScanner
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        if [ -n "$SONAR_TOKEN" ]; then
+          sonar-scanner
+        else
+          echo "SONAR_TOKEN not set, skipping SonarQube scan"
+        fi
+
   build:
     needs: test
     runs-on: ubuntu-latest

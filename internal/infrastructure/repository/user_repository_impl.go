@@ -13,7 +13,6 @@ type userRepository struct {
 	*CleanBaseRepositoryImpl[entities.User]
 }
 
-// NewUserRepository creates a new user repository instance
 func NewUserRepository(
 	db *gorm.DB,
 	authService repositories.AuthorizationService,

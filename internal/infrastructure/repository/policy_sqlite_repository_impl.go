@@ -15,7 +15,6 @@ type policySQLiteRepository struct {
 	logger logger.Logger
 }
 
-// NewPolicySQLiteRepository creates a new SQLite policy repository instance
 func NewPolicySQLiteRepository(db *gorm.DB, logger logger.Logger) repositories.PolicyRepository {
 	return &policySQLiteRepository{
 		db:     db,

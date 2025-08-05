@@ -14,7 +14,6 @@ import (
 	gormlogger "gorm.io/gorm/logger"
 )
 
-// NewDatabase creates a new database connection based on environment configuration
 func NewDatabase() (*gorm.DB, error) {
 	config, err := NewDatabaseConfig()
 	if err != nil {

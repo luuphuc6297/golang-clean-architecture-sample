@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// PolicyEngine defines the interface for policy evaluation and management
 type PolicyEngine interface {
 	Evaluate(ctx context.Context, req *entities.PermissionRequest) (*entities.PermissionResponse, error)
 	LoadPolicies(ctx context.Context) error
@@ -16,7 +15,6 @@ type PolicyEngine interface {
 	GetPoliciesForRole(ctx context.Context, role string) ([]*entities.PolicyDocument, error)
 }
 
-// PolicyRepository defines the interface for policy data operations
 type PolicyRepository interface {
 	Create(ctx context.Context, policy *entities.PolicyDocument) error
 	GetByRole(ctx context.Context, role string) ([]*entities.PolicyDocument, error)

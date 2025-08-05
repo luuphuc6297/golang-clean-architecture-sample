@@ -1,5 +1,3 @@
-// Package repositories defines repository interfaces for the domain layer.
-// These interfaces abstract data access operations and are implemented in the infrastructure layer.
 package repositories
 
 import (
@@ -9,7 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// AuthorizationService defines the interface for authorization and permission checking
 type AuthorizationService interface {
 	CheckPermission(ctx context.Context, userID uuid.UUID, resource, action string) error
 	CheckResourcePermission(ctx context.Context, userID uuid.UUID, resource, action, resourceID string) error
@@ -21,13 +18,11 @@ type AuthorizationService interface {
 	CreateEnrichedContext(ctx context.Context, userID uuid.UUID, role, email string) context.Context
 }
 
-// AuditLogger defines the interface for audit logging operations
 type AuditLogger interface {
 	LogAccess(ctx context.Context, userID uuid.UUID, action, resource string, entityID uuid.UUID) error
 	LogDataAccess(ctx context.Context, userID uuid.UUID, action, resource string, data interface{}) error
 }
 
-// BaseRepository defines the common CRUD operations for any entity type
 type BaseRepository[T any] interface {
 	Create(ctx context.Context, entity *T, userID uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*T, error)

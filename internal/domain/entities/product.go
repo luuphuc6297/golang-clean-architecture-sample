@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// Product represents a product entity in the system
 type Product struct {
 	BaseEntity
 	Name        string    `json:"name" gorm:"not null"`
@@ -18,12 +17,10 @@ type Product struct {
 	CreatedBy   uuid.UUID `json:"created_by" gorm:"type:uuid"`
 }
 
-// TableName returns the database table name for the Product entity
 func (Product) TableName() string {
 	return "products"
 }
 
-// Validate validates the product entity fields and returns an error if invalid
 func (p *Product) Validate() error {
 	if err := validators.ValidateRequired(constants.FieldName, p.Name); err != nil {
 		return err

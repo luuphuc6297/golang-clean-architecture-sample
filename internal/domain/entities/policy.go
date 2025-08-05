@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// PolicyStatement represents a single policy statement with effect, actions, and resources
 type PolicyStatement struct {
 	ID         uuid.UUID              `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
 	PolicyID   uuid.UUID              `json:"policy_id" gorm:"type:uuid;not null"`
@@ -20,7 +19,6 @@ type PolicyStatement struct {
 	UpdatedAt  time.Time              `json:"updated_at" gorm:"autoUpdateTime"`
 }
 
-// PolicyDocument represents a complete policy document containing multiple statements
 type PolicyDocument struct {
 	ID         uuid.UUID         `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
 	Name       string            `json:"name" gorm:"not null;unique"`
@@ -31,7 +29,6 @@ type PolicyDocument struct {
 	UpdatedAt  time.Time         `json:"updated_at" gorm:"autoUpdateTime"`
 }
 
-// PermissionRequest represents a request for permission evaluation
 type PermissionRequest struct {
 	UserID     uuid.UUID              `json:"user_id"`
 	Role       string                 `json:"role"`
@@ -41,7 +38,6 @@ type PermissionRequest struct {
 	Context    map[string]interface{} `json:"context"`
 }
 
-// PermissionResponse represents the result of a permission evaluation
 type PermissionResponse struct {
 	Allowed  bool                   `json:"allowed"`
 	Reason   string                 `json:"reason,omitempty"`
@@ -49,7 +45,6 @@ type PermissionResponse struct {
 	Context  map[string]interface{} `json:"context,omitempty"`
 }
 
-// Permission represents a permission with resource and action
 type Permission struct {
 	Resource   string `json:"resource"`
 	Action     string `json:"action"`
@@ -57,7 +52,6 @@ type Permission struct {
 	ResourceID string `json:"resource_id,omitempty"`
 }
 
-// IsValid validates that the policy statement has required fields
 func (ps *PolicyStatement) IsValid() bool {
 	return ps.Effect == constants.PolicyEffectAllow || ps.Effect == constants.PolicyEffectDeny
 }

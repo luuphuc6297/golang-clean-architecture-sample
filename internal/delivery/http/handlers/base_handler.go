@@ -13,17 +13,14 @@ import (
 	"github.com/google/uuid"
 )
 
-// BaseHandler provides common functionality for HTTP handlers
 type BaseHandler struct {
 	logger logger.Logger
 }
 
-// NewBaseHandler creates a new base handler instance
 func NewBaseHandler(logger logger.Logger) *BaseHandler {
 	return &BaseHandler{logger: logger}
 }
 
-// ParseUUID extracts and parses a UUID parameter from the request
 func (h *BaseHandler) ParseUUID(c *gin.Context, paramName string) (uuid.UUID, error) {
 	idStr := c.Param(paramName)
 	id, err := uuid.Parse(idStr)
@@ -33,7 +30,6 @@ func (h *BaseHandler) ParseUUID(c *gin.Context, paramName string) (uuid.UUID, er
 	return id, nil
 }
 
-// ParsePagination extracts pagination parameters from the request
 func (h *BaseHandler) ParsePagination(c *gin.Context) (limit, offset int) {
 	limitStr := c.DefaultQuery("limit", strconv.Itoa(constants.DefaultLimit))
 	offsetStr := c.DefaultQuery("offset", strconv.Itoa(constants.DefaultOffset))
@@ -51,11 +47,9 @@ func (h *BaseHandler) ParsePagination(c *gin.Context) (limit, offset int) {
 	return limit, offset
 }
 
-// SendErrorResponse sends a standardized error response
 func (h *BaseHandler) SendErrorResponse(c *gin.Context, statusCode int, message string, err error) {
 	h.logger.Error(message, err)
 
-	// Check if it's our structured error
 	var appErr *domainerrors.AppError
 	if errors.As(err, &appErr) {
 		c.JSON(h.getStatusCodeFromCategory(appErr.Category), gin.H{
@@ -68,7 +62,6 @@ func (h *BaseHandler) SendErrorResponse(c *gin.Context, statusCode int, message 
 		return
 	}
 
-	// Fallback for non-structured errors
 	c.JSON(statusCode, gin.H{"error": err.Error()})
 }
 
@@ -91,7 +84,6 @@ func (h *BaseHandler) getStatusCodeFromCategory(category domainerrors.ErrorCateg
 	}
 }
 
-// SendSuccessResponse sends a standardized success response
 func (h *BaseHandler) SendSuccessResponse(c *gin.Context, statusCode int, data interface{}) {
 	c.JSON(statusCode, gin.H{
 		"success": true,
@@ -99,17 +91,14 @@ func (h *BaseHandler) SendSuccessResponse(c *gin.Context, statusCode int, data i
 	})
 }
 
-// SendBadRequest sends a 400 Bad Request response
 func (h *BaseHandler) SendBadRequest(c *gin.Context, message string) {
 	c.JSON(http.StatusBadRequest, gin.H{"error": message})
 }
 
-// SendNotFound sends a 404 Not Found response
 func (h *BaseHandler) SendNotFound(c *gin.Context, message string) {
 	c.JSON(http.StatusNotFound, gin.H{"error": message})
 }
 
-// SendInternalServerError sends a 500 Internal Server Error response
 func (h *BaseHandler) SendInternalServerError(c *gin.Context, message string, err error) {
 	h.logger.Error(message, err)
 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

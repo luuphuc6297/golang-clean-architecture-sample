@@ -1,12 +1,9 @@
 package constants
 
-// ContextKey represents a key type used for context values to avoid collisions.
 type ContextKey string
 
 const (
-	// ResourceUser represents the user resource type for permissions.
-	ResourceUser = "user"
-	// ResourceProduct represents the product resource type for permissions.
+	ResourceUser    = "user"
 	ResourceProduct = "product"
 
 	ActionCreate = "create"

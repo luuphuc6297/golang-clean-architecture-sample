@@ -71,7 +71,6 @@ func (m *AuthMiddleware) AuthRequired() gin.HandlerFunc {
 	}
 }
 
-// ResourceAccess middleware checks if the user has permission to access a specific resource
 func (m *AuthMiddleware) ResourceAccess(resource, action string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		m.AuthRequired()(c)

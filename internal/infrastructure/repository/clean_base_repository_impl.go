@@ -89,7 +89,6 @@ func (r *CleanBaseRepositoryImpl[T]) Update(ctx context.Context, entity *T, user
 	return r.AuditLog(ctx, userID, "update", entity)
 }
 
-// Delete removes an entity from the database by ID
 func (r *CleanBaseRepositoryImpl[T]) Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
 	if err := r.ValidateAccess(ctx, userID, "delete"); err != nil {
 		return err
@@ -103,7 +102,6 @@ func (r *CleanBaseRepositoryImpl[T]) Delete(ctx context.Context, id uuid.UUID, u
 	return r.AuditLog(ctx, userID, "delete", nil)
 }
 
-// List retrieves a paginated list of entities from the database
 func (r *CleanBaseRepositoryImpl[T]) List(ctx context.Context, limit, offset int, userID uuid.UUID) ([]*T, error) {
 	if err := r.ValidateAccess(ctx, userID, "list"); err != nil {
 		return nil, err
@@ -123,7 +121,6 @@ func (r *CleanBaseRepositoryImpl[T]) List(ctx context.Context, limit, offset int
 	return entities, nil
 }
 
-// ValidateAccess checks if the user has permission to perform the specified action
 func (r *CleanBaseRepositoryImpl[T]) ValidateAccess(ctx context.Context, userID uuid.UUID, action string) error {
 	if r.authService == nil {
 		return nil
@@ -131,7 +128,6 @@ func (r *CleanBaseRepositoryImpl[T]) ValidateAccess(ctx context.Context, userID 
 	return r.authService.CheckPermission(ctx, userID, r.resourceName, action)
 }
 
-// AuditLog records an audit log entry for the specified action
 func (r *CleanBaseRepositoryImpl[T]) AuditLog(ctx context.Context, userID uuid.UUID, action string, _ *T) error {
 	if r.auditLogger == nil {
 		return nil
@@ -163,7 +159,6 @@ func (r *CleanBaseRepositoryImpl[T]) handleDatabaseError(err error, operation, r
 	)
 }
 
-// GetDB returns the underlying database connection
 func (r *CleanBaseRepositoryImpl[T]) GetDB() *gorm.DB {
 	return r.db
 }

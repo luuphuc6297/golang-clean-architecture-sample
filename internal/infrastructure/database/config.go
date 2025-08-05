@@ -8,7 +8,6 @@ import (
 	"os"
 )
 
-// DatabaseConfig holds configuration for database connection
 type DatabaseConfig struct {
 	Host     string
 	Port     string
@@ -17,7 +16,6 @@ type DatabaseConfig struct {
 	Name     string
 }
 
-// NewDatabaseConfig creates a new database configuration from environment variables
 func NewDatabaseConfig() (*DatabaseConfig, error) {
 	password := os.Getenv("DB_PASSWORD")
 	if password == "" {
@@ -33,12 +31,10 @@ func NewDatabaseConfig() (*DatabaseConfig, error) {
 	}, nil
 }
 
-// SQLiteConfig holds configuration for SQLite database connection
 type SQLiteConfig struct {
 	DBPath string
 }
 
-// NewSQLiteConfig creates a new SQLite configuration from environment variables
 func NewSQLiteConfig() *SQLiteConfig {
 	return &SQLiteConfig{
 		DBPath: getEnvOrDefault("SQLITE_DB_PATH", "./data/clean_architecture_api.db"),
