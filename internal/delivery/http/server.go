@@ -3,11 +3,13 @@ package http
 import (
 	"clean-architecture-api/internal/delivery/http/handlers"
 	"clean-architecture-api/internal/delivery/middleware"
+	"clean-architecture-api/internal/domain/repositories"
 	"clean-architecture-api/internal/infrastructure/auth"
 	"clean-architecture-api/internal/infrastructure/repository"
 	"clean-architecture-api/internal/usecase"
 	"clean-architecture-api/pkg/logger"
 	"fmt"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -62,7 +64,13 @@ func (s *Server) initializeDependencies() (*routeHandlers, *middleware.AuthMiddl
 	}
 	authLogger := auth.NewAuditLogger(s.logger)
 
-	policyRepo := repository.NewPolicySQLiteRepository(s.db, s.logger)
+	// Choose appropriate policy repository based on environment
+	var policyRepo repositories.PolicyRepository
+	if os.Getenv("ENV") == "production" {
+		policyRepo = repository.NewPolicyRepository(s.db, s.logger)
+	} else {
+		policyRepo = repository.NewPolicySQLiteRepository(s.db, s.logger)
+	}
 	policyEngine := auth.NewPolicyEngine(policyRepo, s.logger)
 	authzService := auth.NewAuthorizationService(policyEngine)
 
