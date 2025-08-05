@@ -60,6 +60,18 @@ jobs:
         JWT_SECRET_KEY: test-secret-key
       run: go test -v ./...
 
+    - name: Format code
+      run: |
+        go fmt ./...
+        # Check if there are any formatting changes
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "Code formatting changes detected:"
+          git diff
+          echo "Please run 'go fmt ./...' locally and commit the changes."
+          exit 1
+        fi
+        echo "Code is properly formatted."
+
     - name: Run linter
       uses: golangci/golangci-lint-action@v7
       with:

@@ -177,7 +177,6 @@ func getRegisterSuccessTestCase() RegisterTestCase {
 		firstName: "John",
 		lastName:  "Doe",
 		setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
-
 			mockRepo.On("GetByEmail", mock.Anything, "test@example.com").Return(nil, domainerrors.ErrUserNotFound)
 
 			mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*entities.User"), mock.AnythingOfType("uuid.UUID")).Return(nil)
@@ -197,7 +196,6 @@ func getRegisterValidationTestCases() []RegisterTestCase {
 			firstName: "John",
 			lastName:  "Doe",
 			setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
-
 				mockLogger.On("Error", mock.Anything, mock.Anything).Return()
 			},
 			expectedError: domainerrors.ErrInvalidEmail,
@@ -209,7 +207,6 @@ func getRegisterValidationTestCases() []RegisterTestCase {
 			firstName: "",
 			lastName:  "Doe",
 			setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
-
 				mockLogger.On("Error", mock.Anything, mock.Anything).Return()
 			},
 			expectedError: domainerrors.ErrFirstNameIsRequired,
@@ -221,7 +218,6 @@ func getRegisterValidationTestCases() []RegisterTestCase {
 			firstName: "John",
 			lastName:  "",
 			setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
-
 				mockLogger.On("Error", mock.Anything, mock.Anything).Return()
 			},
 			expectedError: domainerrors.ErrLastNameIsRequired,
@@ -233,9 +229,7 @@ func getRegisterValidationTestCases() []RegisterTestCase {
 			firstName: "John",
 			lastName:  "Doe",
 			setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
-
 				mockRepo.On("GetByEmail", mock.Anything, "test@example.com").Return(nil, domainerrors.ErrUserNotFound)
-
 				mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*entities.User"), mock.AnythingOfType("uuid.UUID")).Return(domainerrors.ErrFailedToCreateUser)
 				mockLogger.On("Error", mock.Anything, mock.Anything).Return()
 			},
@@ -259,7 +253,6 @@ func getRegisterConflictTestCase() RegisterTestCase {
 		firstName: "John",
 		lastName:  "Doe",
 		setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
-
 			mockRepo.On("GetByEmail", mock.Anything, "existing@example.com").Return(existingUser, nil)
 			mockLogger.On("Error", mock.Anything, mock.Anything).Return()
 		},
@@ -277,9 +270,7 @@ func getRegisterDatabaseTestCases() []RegisterTestCase {
 			firstName: "John",
 			lastName:  "Doe",
 			setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
-
 				mockRepo.On("GetByEmail", mock.Anything, "test@example.com").Return(nil, domainerrors.ErrUserNotFound)
-
 				mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*entities.User"), mock.AnythingOfType("uuid.UUID")).Return(domainerrors.ErrFailedToCreateUser)
 				mockLogger.On("Error", mock.Anything, mock.Anything).Return()
 			},
@@ -390,67 +381,78 @@ func getLoginSuccessTestCase(validUser *entities.User, validTokenPair *auth.Toke
 	}
 }
 
+func getUserNotFoundTestCase() LoginTestCase {
+	return LoginTestCase{
+		name:     "Failure - User not found",
+		email:    "nonexistent@example.com",
+		password: "password123",
+		setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
+			mockRepo.On("GetByEmail", mock.Anything, "nonexistent@example.com").Return(nil, domainerrors.ErrUserNotFound)
+			mockLogger.On("Error", mock.Anything, mock.Anything).Return()
+		},
+		expectedToken: nil,
+		expectedError: domainerrors.ErrInvalidCredentials,
+	}
+}
+
+func getUserDeactivatedTestCase(validUser *entities.User, validUserID uuid.UUID) LoginTestCase {
+	return LoginTestCase{
+		name:     "Failure - User deactivated",
+		email:    "deactivated@example.com",
+		password: "password123",
+		setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
+			deactivatedUser := &entities.User{
+				BaseEntity: entities.BaseEntity{ID: validUserID},
+				Email:      "deactivated@example.com",
+				Password:   validUser.Password,
+				FirstName:  "John",
+				LastName:   "Doe",
+				Role:       "user",
+				IsActive:   false,
+			}
+			mockRepo.On("GetByEmail", mock.Anything, "deactivated@example.com").Return(deactivatedUser, nil)
+			mockLogger.On("Error", mock.Anything, mock.Anything).Return()
+		},
+		expectedToken: nil,
+		expectedError: domainerrors.ErrUserDeactivated,
+	}
+}
+
+func getInvalidPasswordTestCase(validUser *entities.User) LoginTestCase {
+	return LoginTestCase{
+		name:     "Failure - Invalid password",
+		email:    "test@example.com",
+		password: "wrongpassword",
+		setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
+			mockRepo.On("GetByEmail", mock.Anything, "test@example.com").Return(validUser, nil)
+			mockLogger.On("Error", mock.Anything, mock.Anything).Return()
+		},
+		expectedToken: nil,
+		expectedError: domainerrors.ErrInvalidCredentials,
+	}
+}
+
+func getTokenGenerationErrorTestCase(validUser *entities.User, validUserID uuid.UUID) LoginTestCase {
+	return LoginTestCase{
+		name:     "Failure - Token generation error",
+		email:    "test@example.com",
+		password: "password123",
+		setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
+			mockRepo.On("GetByEmail", mock.Anything, "test@example.com").Return(validUser, nil)
+			mockAuth.On("GenerateTokenPair", validUserID, "test@example.com", "user").Return(nil, domainerrors.ErrFailedToGenerateTokens)
+			mockLogger.On("Error", mock.Anything, mock.Anything).Return()
+		},
+		expectedToken: nil,
+		expectedError: domainerrors.ErrFailedToGenerateTokens,
+	}
+}
+
 func getLoginFailureTestCases(validUser *entities.User, validTokenPair *auth.TokenPair, validUserID uuid.UUID) []LoginTestCase {
 	return []LoginTestCase{
-		{
-			name:     "Failure - User not found",
-			email:    "nonexistent@example.com",
-			password: "password123",
-			setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
-
-				mockRepo.On("GetByEmail", mock.Anything, "nonexistent@example.com").Return(nil, domainerrors.ErrUserNotFound)
-				mockLogger.On("Error", mock.Anything, mock.Anything).Return()
-			},
-			expectedToken: nil,
-			expectedError: domainerrors.ErrInvalidCredentials,
-		},
-		{
-			name:     "Failure - User deactivated",
-			email:    "deactivated@example.com",
-			password: "password123",
-			setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
-
-				deactivatedUser := &entities.User{
-					BaseEntity: entities.BaseEntity{ID: validUserID},
-					Email:      "deactivated@example.com",
-					Password:   validUser.Password,
-					FirstName:  "John",
-					LastName:   "Doe",
-					Role:       "user",
-					IsActive:   false,
-				}
-				mockRepo.On("GetByEmail", mock.Anything, "deactivated@example.com").Return(deactivatedUser, nil)
-				mockLogger.On("Error", mock.Anything, mock.Anything).Return()
-			},
-			expectedToken: nil,
-			expectedError: domainerrors.ErrUserDeactivated,
-		},
-		{
-			name:     "Failure - Invalid password",
-			email:    "test@example.com",
-			password: "wrongpassword",
-			setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
-
-				mockRepo.On("GetByEmail", mock.Anything, "test@example.com").Return(validUser, nil)
-				mockLogger.On("Error", mock.Anything, mock.Anything).Return()
-			},
-			expectedToken: nil,
-			expectedError: domainerrors.ErrInvalidCredentials,
-		},
-		{
-			name:     "Failure - Token generation error",
-			email:    "test@example.com",
-			password: "password123",
-			setupMocks: func(mockRepo *MockUserRepository, mockAuth *MockAuthService, mockLogger *MockLogger) {
-
-				mockRepo.On("GetByEmail", mock.Anything, "test@example.com").Return(validUser, nil)
-
-				mockAuth.On("GenerateTokenPair", validUserID, "test@example.com", "user").Return(nil, domainerrors.ErrFailedToGenerateTokens)
-				mockLogger.On("Error", mock.Anything, mock.Anything).Return()
-			},
-			expectedToken: nil,
-			expectedError: domainerrors.ErrFailedToGenerateTokens,
-		},
+		getUserNotFoundTestCase(),
+		getUserDeactivatedTestCase(validUser, validUserID),
+		getInvalidPasswordTestCase(validUser),
+		getTokenGenerationErrorTestCase(validUser, validUserID),
 	}
 }
 
