@@ -91,6 +91,11 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    
+    # Add "id-token" with the intended permissions for Workload Identity Federation
+    permissions:
+      contents: 'read'
+      id-token: 'write'
 
     steps:
     - uses: actions/checkout@v4
@@ -101,12 +106,16 @@ jobs:
         name: app-image
 
     - name: Authenticate to Google Cloud
-      uses: google-github-actions/auth@v1
+      uses: 'google-github-actions/auth@v2'
       with:
-        credentials_json: ${{ secrets.GCP_SA_KEY }}
+        workload_identity_provider: 'projects/emerald-green-1754237937/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider'
+        service_account: 'github-actions-user@emerald-green-1754237937.iam.gserviceaccount.com'
 
     - name: Set up Cloud SDK
-      uses: google-github-actions/setup-gcloud@v2
+      uses: 'google-github-actions/setup-gcloud@v2'
+      with:
+        version: '>= 390.0.0'
+        project_id: ${{ env.PROJECT_ID }}
 
     - name: Copy files to GCP instance
       run: |
