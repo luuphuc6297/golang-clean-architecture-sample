@@ -55,8 +55,12 @@ func (uc *authUseCase) Register(ctx context.Context, email, password, firstName,
 
 	user := uc.createUser(email, hashedPassword, firstName, lastName)
 
+	// Create system context for user registration
 	systemUserID := uuid.MustParse(constants.SystemUserID)
-	if err := uc.userRepo.Create(ctx, user, systemUserID); err != nil {
+	systemCtx := context.WithValue(ctx, constants.ContextUserRole, constants.RoleAdmin)
+	systemCtx = context.WithValue(systemCtx, constants.ContextUserID, systemUserID)
+	
+	if err := uc.userRepo.Create(systemCtx, user, systemUserID); err != nil {
 		uc.logger.Error("Failed to create user in database", err.Error())
 		return nil, domainerrors.ErrFailedToCreateUser
 	}
