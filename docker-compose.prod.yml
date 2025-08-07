@@ -35,6 +35,9 @@ services:
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - PORT=8080
       - ENV=production
+      - NEW_RELIC_ENABLED=${NEW_RELIC_ENABLED:-true}
+      - NEW_RELIC_APP_NAME=${NEW_RELIC_APP_NAME:-clean-architecture-api}
+      - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
     ports:
       - "8080:8080"
     depends_on:

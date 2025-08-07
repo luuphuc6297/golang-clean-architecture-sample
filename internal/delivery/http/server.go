@@ -12,6 +12,8 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/newrelic/go-agent/v3/integrations/nrgin"
+	newrelicagent "github.com/newrelic/go-agent/v3/newrelic"
 	"gorm.io/gorm"
 )
 
@@ -19,19 +21,34 @@ type Server struct {
 	router *gin.Engine
 	db     *gorm.DB
 	logger logger.Logger
+	nrApp  *newrelicagent.Application
 }
 
 func NewServer(db *gorm.DB, logger logger.Logger) (*Server, error) {
+	return NewServerWithNewRelic(db, logger, nil)
+}
+
+// NewServerWithNewRelic creates a new server with New Relic monitoring.
+func NewServerWithNewRelic(db *gorm.DB, logger logger.Logger, nrApp *newrelicagent.Application) (*Server, error) {
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
+	// Add New Relic middleware if application is provided
+	if nrApp != nil {
+		router.Use(nrgin.Middleware(nrApp))
+		logger.Info("New Relic monitoring enabled for HTTP server")
+	} else {
+		logger.Info("New Relic monitoring disabled for HTTP server")
+	}
+
 	server := &Server{
 		router: router,
 		db:     db,
 		logger: logger,
+		nrApp:  nrApp,
 	}
 
 	if err := server.setupRoutes(); err != nil {
