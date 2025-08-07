@@ -5,7 +5,6 @@ import (
 	"clean-architecture-api/internal/domain/entities"
 	"clean-architecture-api/internal/infrastructure/auth"
 	"clean-architecture-api/pkg/logger"
-	newrelicpkg "clean-architecture-api/pkg/newrelic"
 	"context"
 	"fmt"
 
@@ -32,22 +31,12 @@ func NewDatabaseWithNewRelic(nrApp *newrelic.Application) (*gorm.DB, error) {
 
 	// Configure GORM logger
 	gormLogger := gormlogger.Default.LogMode(gormlogger.Info)
-	if nrApp != nil {
-		gormLogger = newrelicpkg.NewGormLogger(gormlogger.Default.LogMode(gormlogger.Info), nrApp)
-	}
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: gormLogger,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
-	}
-
-	// Add New Relic callbacks to GORM
-	if nrApp != nil {
-		if err := newrelicpkg.AddNewRelicToGorm(db, nrApp); err != nil {
-			return nil, fmt.Errorf("failed to add New Relic to GORM: %w", err)
-		}
 	}
 
 	if err := autoMigrate(db); err != nil {

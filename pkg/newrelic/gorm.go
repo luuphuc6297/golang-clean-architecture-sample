@@ -25,25 +25,43 @@ func NewGormLogger(baseLogger logger.Interface, app *newrelic.Application) *Gorm
 
 // Trace adds New Relic database segment to GORM queries.
 func (l *GormNewRelicLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql string, rowsAffected int64), err error) {
+	// Always call the original trace method first
+	l.Interface.Trace(ctx, begin, fc, err)
+
+	// Add New Relic monitoring if available
 	if l.app != nil {
 		// Extract New Relic transaction from context
 		if txn := newrelic.FromContext(ctx); txn != nil {
-			sql, _ := fc()
+			// Safely get SQL and rows affected
+			var sql string
+			var rowsAffected int64
+			if fc != nil {
+				sql, rowsAffected = fc()
+			}
+
+			// Create datastore segment
 			segment := newrelic.DatastoreSegment{
-				Product:    newrelic.DatastorePostgres, // Change to DatastoreSQLite for SQLite
+				Product:    newrelic.DatastorePostgres,
 				Collection: "query",
 				Operation:  "exec",
 			}
+			segment.StartTime = txn.StartSegmentNow()
+
 			if sql != "" {
 				segment.ParameterizedQuery = sql
 			}
-			segment.StartTime = txn.StartSegmentNow()
+
+			// Set rows affected if available
+			if rowsAffected > 0 {
+				// New Relic doesn't have a direct field for rows affected,
+				// but we can add it as an attribute
+				txn.AddAttribute("db.rows_affected", rowsAffected)
+			}
+
+			// End the segment
 			segment.End()
 		}
 	}
-
-	// Call the original trace method
-	l.Interface.Trace(ctx, begin, fc, err)
 }
 
 // AddNewRelicToGorm adds New Relic callbacks to GORM instance.

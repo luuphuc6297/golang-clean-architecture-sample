@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type AuditLogEntry struct {
-	ID        uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	ID        uuid.UUID `json:"id" gorm:"type:uuid;primary_key"`
 	UserID    uuid.UUID `json:"user_id" gorm:"type:uuid;not null"`
 	Action    string    `json:"action" gorm:"not null"`
 	Resource  string    `json:"resource" gorm:"not null"`
@@ -18,6 +19,13 @@ type AuditLogEntry struct {
 	Timestamp time.Time `json:"timestamp" gorm:"not null"`
 	IPAddress string    `json:"ip_address"`
 	UserAgent string    `json:"user_agent"`
+}
+
+func (ale *AuditLogEntry) BeforeCreate(_ *gorm.DB) error {
+	if ale.ID == uuid.Nil {
+		ale.ID = uuid.New()
+	}
+	return nil
 }
 
 type AuditLoggerImpl struct {

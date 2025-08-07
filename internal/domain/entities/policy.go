@@ -5,10 +5,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type PolicyStatement struct {
-	ID         uuid.UUID              `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	ID         uuid.UUID              `json:"id" gorm:"type:uuid;primary_key"`
 	PolicyID   uuid.UUID              `json:"policy_id" gorm:"type:uuid;not null"`
 	Effect     string                 `json:"effect" gorm:"not null"`
 	Principal  string                 `json:"principal" gorm:"not null"`
@@ -20,7 +21,7 @@ type PolicyStatement struct {
 }
 
 type PolicyDocument struct {
-	ID         uuid.UUID         `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	ID         uuid.UUID         `json:"id" gorm:"type:uuid;primary_key"`
 	Name       string            `json:"name" gorm:"not null;unique"`
 	Version    string            `json:"version" gorm:"not null;default:'1.0'"`
 	Statements []PolicyStatement `json:"statements" gorm:"foreignKey:PolicyID"`
@@ -50,6 +51,20 @@ type Permission struct {
 	Action     string `json:"action"`
 	Role       string `json:"role"`
 	ResourceID string `json:"resource_id,omitempty"`
+}
+
+func (ps *PolicyStatement) BeforeCreate(_ *gorm.DB) error {
+	if ps.ID == uuid.Nil {
+		ps.ID = uuid.New()
+	}
+	return nil
+}
+
+func (pd *PolicyDocument) BeforeCreate(_ *gorm.DB) error {
+	if pd.ID == uuid.Nil {
+		pd.ID = uuid.New()
+	}
+	return nil
 }
 
 func (ps *PolicyStatement) IsValid() bool {

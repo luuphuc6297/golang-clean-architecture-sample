@@ -1,5 +1,3 @@
-// Package database provides database configuration and connection management.
-// It supports both PostgreSQL and SQLite databases with environment-based configuration.
 package database
 
 import (

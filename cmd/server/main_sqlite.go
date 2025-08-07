@@ -23,7 +23,6 @@ func main() {
 		logger.Fatal("Failed to connect to SQLite database", err)
 	}
 
-	// Initialize default policies for SQLite
 	if err := database.InitializeSQLiteDefaultPolicies(db, logger); err != nil {
 		logger.Fatal("Failed to initialize default policies", err)
 	}

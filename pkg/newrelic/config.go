@@ -1,4 +1,3 @@
-// Package newrelic provides New Relic application monitoring integration.
 package newrelic
 
 import (
@@ -8,14 +7,12 @@ import (
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
-// Config holds New Relic configuration options.
 type Config struct {
 	AppName    string
 	LicenseKey string
 	Enabled    bool
 }
 
-// NewConfig creates a new New Relic configuration from environment variables.
 func NewConfig() *Config {
 	enabled := os.Getenv("NEW_RELIC_ENABLED")
 	if enabled != "true" {
@@ -29,7 +26,6 @@ func NewConfig() *Config {
 	}
 }
 
-// NewApplication creates a new New Relic application instance.
 func NewApplication(cfg *Config) (*newrelic.Application, error) {
 	if !cfg.Enabled {
 		return nil, nil
