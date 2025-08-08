@@ -29,38 +29,56 @@ func (l *GormNewRelicLogger) Trace(ctx context.Context, begin time.Time, fc func
 	l.Interface.Trace(ctx, begin, fc, err)
 
 	// Add New Relic monitoring if available
-	if l.app != nil {
-		// Extract New Relic transaction from context
-		if txn := newrelic.FromContext(ctx); txn != nil {
-			// Safely get SQL and rows affected
-			var sql string
-			var rowsAffected int64
-			if fc != nil {
-				sql, rowsAffected = fc()
-			}
+	l.addNewRelicTrace(ctx, fc)
+}
 
-			// Create datastore segment
-			segment := newrelic.DatastoreSegment{
-				Product:    newrelic.DatastorePostgres,
-				Collection: "query",
-				Operation:  "exec",
-			}
-			segment.StartTime = txn.StartSegmentNow()
+// addNewRelicTrace adds New Relic monitoring to the trace.
+func (l *GormNewRelicLogger) addNewRelicTrace(ctx context.Context, fc func() (sql string, rowsAffected int64)) {
+	if l.app == nil {
+		return
+	}
 
-			if sql != "" {
-				segment.ParameterizedQuery = sql
-			}
+	txn := newrelic.FromContext(ctx)
+	if txn == nil {
+		return
+	}
 
-			// Set rows affected if available
-			if rowsAffected > 0 {
-				// New Relic doesn't have a direct field for rows affected,
-				// but we can add it as an attribute
-				txn.AddAttribute("db.rows_affected", rowsAffected)
-			}
+	sql, rowsAffected := l.getSQLInfo(fc)
+	segment := l.createDatastoreSegment(txn, sql)
+	l.addRowsAffectedAttribute(txn, rowsAffected)
+	segment.End()
+}
 
-			// End the segment
-			segment.End()
-		}
+// getSQLInfo safely extracts SQL and rows affected information.
+func (l *GormNewRelicLogger) getSQLInfo(fc func() (sql string, rowsAffected int64)) (string, int64) {
+	if fc == nil {
+		return "", 0
+	}
+	return fc()
+}
+
+// createDatastoreSegment creates and configures a New Relic datastore segment.
+func (l *GormNewRelicLogger) createDatastoreSegment(txn *newrelic.Transaction, sql string) *newrelic.DatastoreSegment {
+	segment := newrelic.DatastoreSegment{
+		Product:    newrelic.DatastorePostgres,
+		Collection: "query",
+		Operation:  "exec",
+	}
+	segment.StartTime = txn.StartSegmentNow()
+
+	if sql != "" {
+		segment.ParameterizedQuery = sql
+	}
+
+	return &segment
+}
+
+// addRowsAffectedAttribute adds rows affected as a New Relic attribute if available.
+func (l *GormNewRelicLogger) addRowsAffectedAttribute(txn *newrelic.Transaction, rowsAffected int64) {
+	if rowsAffected > 0 {
+		// New Relic doesn't have a direct field for rows affected,
+		// but we can add it as an attribute
+		txn.AddAttribute("db.rows_affected", rowsAffected)
 	}
 }
 
